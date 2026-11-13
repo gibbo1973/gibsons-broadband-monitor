@@ -16,6 +16,9 @@
   <TemplateURL>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/unraid/gibsons-broadband-monitor.xml</TemplateURL>
   <WebUI>http://[IP]:[PORT:8765]/</WebUI>
   <Icon>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/app/static/icon.png</Icon>
+  <Screenshot>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/Image%2013-11-2026%20at%2021.53.png</Screenshot>
+  <Screenshot>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/Image%2013-11-2026%20at%2021.53%20(1).png</Screenshot>
+  <Screenshot>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/Image%2013-11-2026%20at%2021.53%20(2).png</Screenshot>
   <ExtraParams>--security-opt=no-new-privileges --cap-drop=ALL --cap-add=CHOWN --cap-add=SETUID --cap-add=SETGID</ExtraParams>
   <Description>Automatic download/upload/latency testing, internet availability monitoring and zoomable historical charts. Data stays in local persistent SQLite storage, with no automatic deletion and CSV export. Designed for Unraid and Docker; no cloud account required. Beta release.</Description>
   <Config Name="Web Interface" Target="8765" Default="8765" Mode="tcp" Description="Dashboard port" Type="Port" Display="always" Required="true" Mask="false">8765</Config>
