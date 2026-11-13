@@ -1,5 +1,9 @@
 # Gibson's Broadband Monitor
 
+[![GHCR Docker pulls](https://ghcr-badge.elias.eu.org/shield/gibbo1973/gibsons-broadband-monitor)](https://github.com/users/gibbo1973/packages/container/package/gibsons-broadband-monitor)
+
+*Docker pulls are image downloads/updates, not a count of unique users. The badge is provided by a third-party GHCR statistics service and may lag or be temporarily unavailable.*
+
 ![Gibson's Broadband Monitor logo](app/static/brand.png)
 
 **Beautiful, lightweight, self-hosted broadband monitoring.** A simple Unraid/Docker dashboard with digital readings, smooth historical speed graphs, latency tracking, real connection checks, unlimited local history and CSV export.
