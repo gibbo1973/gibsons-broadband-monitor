@@ -1,0 +1,27 @@
+services:
+  gibsons-broadband-monitor:
+    build: .
+    image: gibsons-broadband-monitor:local
+    container_name: gibsons-broadband-monitor
+    restart: unless-stopped
+    ports:
+      - "8765:8765"
+    volumes:
+      - gbm-data:/data
+    environment:
+      TZ: Europe/London
+      SPEED_INTERVAL_MINUTES: "60"
+      PROBE_INTERVAL_SECONDS: "30"
+      SLOW_DOWNLOAD_MBPS: "100"
+      DASHBOARD_PASSWORD: ""  # Set a password if enabling remote access.
+      # SECRET_KEY: "paste-a-long-random-secret-here"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - SETUID
+      - SETGID
+volumes:
+  gbm-data:

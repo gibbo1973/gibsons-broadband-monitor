@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#07131f">
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static',filename='icon.svg') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='style.css') }}">
+  <title>Gibson's Broadband Monitor</title>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar" aria-label="Main navigation">
+    <a href="/" class="brand">
+      <img src="{{ url_for('static',filename='icon.svg') }}" class="brand-icon" alt="">
+      <span class="brand-text"><strong>GIBSON'S</strong><small>BROADBAND MONITOR</small></span>
+    </a>
+    <div class="nav-label">MONITOR</div>
+    <nav>
+      <button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>Overview</button>
+      <button class="nav-item" data-view="history"><span class="nav-icon">⌁</span>Test history</button>
+      <button class="nav-item" data-view="outages"><span class="nav-icon">◷</span>Outages</button>
+    </nav>
+    <div class="nav-label nav-label-tools">TOOLS</div>
+    <nav>
+      <button class="nav-item" data-view="settings"><span class="nav-icon">⚙</span>Settings</button>
+      <a class="nav-item" href="/api/export.csv"><span class="nav-icon">⇩</span>Export CSV</a>
+    </nav>
+    <div class="sidebar-footer"><div class="subtle-dot"></div> Local monitoring <br><span>v{{ version }}</span></div>
+  </aside>
+
+  <div class="workspace">
+    <header class="topbar">
+      <div class="mobile-brand"><img src="{{ url_for('static',filename='icon.svg') }}" alt=""><span>Gibson's Monitor</span></div>
+      <div class="crumb">YOUR CONNECTION <span class="crumb-sep">/</span> <strong id="page-name">Overview</strong></div>
+      <div class="topbar-right">
+        <span id="connection-pill" class="connection-pill"><span class="live-dot"></span>Checking...</span>
+        <span id="clock" class="top-clock"></span>
+      </div>
+    </header>
+
+    <main>
+      <section class="view visible" id="view-overview">
+        <div class="hero-heading">
+          <div><p class="eyebrow">NETWORK INTELLIGENCE</p><h1>Broadband overview<span class="heading-spark">.</span></h1><p class="intro">A clearer picture of your connection, every day.</p></div>
+          <button class="action-btn" id="run-btn"><span class="bolt">↯</span><span id="run-label">Run speed test</span></button>
+        </div>
+
+        <div class="metric-grid">
+          <article class="metric-card metric-download"><div class="metric-label"><span class="metric-symbol">↓</span> DOWNLOAD <span class="metric-corner">LIVE RESULT</span></div><div class="metric-reading"><span id="down-value">—</span><span class="unit">Mbps</span></div><div class="metric-bottom"><span class="tiny-line cyan-line"></span><span id="down-note">Awaiting first test</span></div></article>
+          <article class="metric-card metric-upload"><div class="metric-label"><span class="metric-symbol">↑</span> UPLOAD <span class="metric-corner">LIVE RESULT</span></div><div class="metric-reading"><span id="up-value">—</span><span class="unit">Mbps</span></div><div class="metric-bottom"><span class="tiny-line mint-line"></span><span>Most recent test</span></div></article>
+          <article class="metric-card metric-ping"><div class="metric-label"><span class="metric-symbol">⌁</span> LATENCY <span class="metric-corner">PING</span></div><div class="metric-reading"><span id="ping-value">—</span><span class="unit">ms</span></div><div class="metric-bottom"><span class="tiny-line violet-line"></span><span id="ping-note">Most recent test</span></div></article>
+        </div>
+
+        <div class="quick-stats">
+          <div><span class="stat-title">CONNECTION UPTIME <span class="muted">· LAST 30 DAYS</span></span><div class="stat-value"><span id="uptime">—</span><span class="stat-unit">%</span></div></div>
+          <div class="vertical-divider"></div>
+          <div><span class="stat-title">RECORDED OUTAGES <span class="muted">· LAST 30 DAYS</span></span><div class="stat-value" id="outages-count">—</div></div>
+          <div class="vertical-divider"></div>
+          <div><span class="stat-title">SPEED TESTS LOGGED <span class="muted">· ALL TIME</span></span><div class="stat-value" id="tests-count">—</div></div>
+          <div class="vertical-divider"></div>
+          <div><span class="stat-title">LAST MEASUREMENT</span><div class="stat-value stat-time" id="last-test">Not yet</div></div>
+        </div>
+
+        <div class="section-heading"><div><h2>Performance history</h2><p>Actual measurements over time, with no artificial averaging.</p></div></div>
+        <div class="chart-card">
+          <div class="chart-header"><div><span class="eyebrow chart-eyebrow">SPEED PERFORMANCE</span><h3>Download &amp; upload</h3></div><div class="periods" id="periods" role="group" aria-label="History period"><button data-period="24h">24H</button><button data-period="7d" class="selected">7D</button><button data-period="30d">30D</button><button data-period="90d">90D</button><button data-period="1y">1Y</button><button data-period="all">ALL</button></div></div>
+          <div class="chart-legend"><span><i class="legend-dot cyan"></i>Download</span><span><i class="legend-dot mint"></i>Upload</span></div>
+          <div class="chart-wrap"><canvas id="speed-chart" aria-label="Download and upload line graph"></canvas><div class="chart-empty" id="speed-empty">Collecting data. Your first scheduled test will appear here shortly.</div><div class="chart-tooltip" id="speed-tip"></div></div>
+          <div class="chart-footer"><span id="speed-summary">No measurements for this period</span><button class="text-button" id="custom-range-btn">Custom range ↗</button></div>
+          <div class="date-range" id="date-range"><label>From <input type="datetime-local" id="start-date"></label><label>To <input type="datetime-local" id="end-date"></label><button class="ghost-btn" id="apply-range">Apply</button></div>
+        </div>
+
+        <div class="lower-grid">
+          <article class="chart-card latency-card"><div class="chart-header"><div><span class="eyebrow chart-eyebrow">RESPONSE TIME</span><h3>Latency trend</h3></div><span class="secondary-tag">LOWER IS BETTER</span></div><div class="chart-wrap chart-wrap-small"><canvas id="latency-chart" aria-label="Latency line graph"></canvas><div class="chart-empty" id="latency-empty">No latency readings yet</div><div class="chart-tooltip" id="latency-tip"></div></div></article>
+          <article class="status-card"><div class="chart-header"><div><span class="eyebrow chart-eyebrow">CONNECTION STATUS</span><h3>Internet reliability</h3></div><span id="status-indicator" class="status-indicator">CHECKING</span></div><div class="connection-visual"><div class="signal-ring"><span class="signal-icon">⌁</span></div><div><strong id="status-title">Checking connection</strong><p id="status-detail">Looking for a response from the internet.</p></div></div><div class="status-divider"></div><div class="status-foot"><span>Connectivity checked every <b id="probe-every">30s</b></span><span id="last-check">—</span></div></article>
+        </div>
+        <div class="footer-note">GIBSON'S BROADBAND MONITOR <span>•</span> PRIVATE BY DESIGN <span>•</span> DATA STAYS ON YOUR SERVER</div>
+      </section>
+
+      <section class="view" id="view-history"><div class="hero-heading"><div><p class="eyebrow">YOUR RESULTS</p><h1>Test history<span class="heading-spark">.</span></h1><p class="intro">Every recorded result, including failed tests.</p></div><a class="action-btn action-link" href="/api/export.csv">⇩ &nbsp;Export CSV</a></div><article class="chart-card table-card"><div class="table-scroll"><table><thead><tr><th>TESTED</th><th>DOWNLOAD</th><th>UPLOAD</th><th>LATENCY</th><th>SERVER</th><th>RESULT</th></tr></thead><tbody id="results-table"><tr><td colspan="6">Loading results…</td></tr></tbody></table></div><p class="table-caption">Latest 100 results · CSV export includes all results</p></article></section>
+
+      <section class="view" id="view-outages"><div class="hero-heading"><div><p class="eyebrow">AVAILABILITY RECORD</p><h1>Outage history<span class="heading-spark">.</span></h1><p class="intro">Brief disconnections are recorded separately from slow speeds.</p></div></div><article class="chart-card table-card"><div class="table-scroll"><table><thead><tr><th>STARTED</th><th>RESTORED</th><th>DURATION</th><th>STATUS</th></tr></thead><tbody id="outages-table"><tr><td colspan="4">Loading outages…</td></tr></tbody></table></div><p class="table-caption">Two consecutive failed probes are needed to flag a disconnection. Endpoints may occasionally be unreachable even when your ISP is working.</p></article></section>
+
+      <section class="view" id="view-settings"><div class="hero-heading"><div><p class="eyebrow">CUSTOMISE YOUR MONITOR</p><h1>Settings<span class="heading-spark">.</span></h1><p class="intro">Choose how frequently your broadband is measured.</p></div></div><article class="chart-card settings-panel"><div class="settings-header"><h3>Monitoring frequency</h3><p>Speed tests use real bandwidth. Connectivity checks are much lighter.</p></div><form id="settings-form"><label>Speed test interval <span>Minutes between full download/upload tests (15–1440)</span><input id="speed-interval" type="number" min="15" max="1440" required></label><label>Connectivity check interval <span>Seconds between small availability checks (15–3600)</span><input id="probe-interval" type="number" min="15" max="3600" required></label><label>Slow download warning <span>Threshold in Mbps for highlighting low results</span><input id="slow-threshold" type="number" min="1" max="100000" required></label><div class="settings-actions"><button type="submit" class="action-btn">Save settings</button><span id="settings-message"></span></div></form></article><div class="security-note">Data is kept indefinitely unless you delete the persistent app data directory. If accessing the app from the public internet, configure <code>DASHBOARD_PASSWORD</code> and HTTPS through a trusted reverse proxy.</div></section>
+    </main>
+    <nav class="mobile-nav" aria-label="Mobile navigation"><button data-view="overview" class="active">Overview</button><button data-view="history">History</button><button data-view="outages">Outages</button><button data-view="settings">Settings</button></nav>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
+<script src="{{ url_for('static',filename='app.js') }}" defer></script>
+</body>
+</html>

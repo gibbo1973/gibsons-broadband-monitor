@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Container version="2">
+  <Name>Gibson's Broadband Monitor</Name>
+  <!-- Public listing requires a working, public GHCR image and validation. -->
+  <Repository>ghcr.io/gibbo1973/gibsons-broadband-monitor:latest</Repository>
+  <Registry>https://ghcr.io</Registry>
+  <Network>bridge</Network>
+  <Privileged>false</Privileged>
+  <Support>https://github.com/gibbo1973/gibsons-broadband-monitor/issues</Support>
+  <Project>https://github.com/gibbo1973/gibsons-broadband-monitor</Project>
+  <Overview>Beautiful, self-hosted broadband monitoring with clear speed readings, smooth historical graphs, uptime tracking and outage logs.</Overview>
+  <Category>Network:Other</Category>
+  <TemplateURL>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/unraid/gibsons-broadband-monitor.xml</TemplateURL>
+  <WebUI>http://[IP]:[PORT:8765]/</WebUI>
+  <Icon>https://raw.githubusercontent.com/gibbo1973/gibsons-broadband-monitor/main/app/static/icon.png</Icon>
+  <ExtraParams>--security-opt=no-new-privileges --cap-drop=ALL --cap-add=CHOWN --cap-add=SETUID --cap-add=SETGID</ExtraParams>
+  <Description>Automatic download/upload/latency testing and internet availability monitoring. Data is stored locally in SQLite, with unlimited history and CSV export.</Description>
+  <Config Name="Web Interface" Target="8765" Default="8765" Mode="tcp" Description="Dashboard port" Type="Port" Display="always" Required="true" Mask="false">8765</Config>
+  <Config Name="Persistent Data" Target="/data" Default="/mnt/user/appdata/gibsons-broadband-monitor" Mode="rw" Description="SQLite database and local records" Type="Path" Display="always" Required="true" Mask="false">/mnt/user/appdata/gibsons-broadband-monitor</Config>
+  <Config Name="Timezone" Target="TZ" Default="Europe/London" Mode="" Description="Display timezone" Type="Variable" Display="always" Required="false" Mask="false">Europe/London</Config>
+  <Config Name="Full speed tests every (minutes)" Target="SPEED_INTERVAL_MINUTES" Default="60" Mode="" Description="Default interval (configurable later in dashboard)" Type="Variable" Display="always" Required="false" Mask="false">60</Config>
+  <Config Name="Connectivity check every (seconds)" Target="PROBE_INTERVAL_SECONDS" Default="30" Mode="" Description="Default probe interval" Type="Variable" Display="advanced" Required="false" Mask="false">30</Config>
+  <Config Name="Dashboard password (optional)" Target="DASHBOARD_PASSWORD" Default="" Mode="" Description="Set a password when dashboard might be remotely accessible" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+  <Config Name="Session signing key" Target="SECRET_KEY" Default="" Mode="" Description="Use a long random secret to preserve login sessions across restarts" Type="Variable" Display="advanced" Required="false" Mask="true"></Config>
+</Container>
