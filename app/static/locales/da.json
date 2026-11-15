@@ -117,5 +117,11 @@
   "Just now": "Lige nu",
   "Download and upload line graph": "Kurvediagram for download og upload",
   "Latency line graph": "Kurvediagram for latens",
-  "History period": "Historikperiode"
+  "History period": "Historikperiode",
+  "Main navigation": "Hovednavigation",
+  "Mobile navigation": "Mobilnavigation",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "Data gemmes på ubestemt tid, medmindre du sletter appens vedvarende datamappe.",
+  "If accessing the app from the public internet, configure": "Hvis du tilgår appen fra det offentlige internet, skal du konfigurere",
+  "and HTTPS through a trusted reverse proxy.": "og HTTPS via en betroet reverse proxy.",
+  "Incorrect password": "Forkert adgangskode"
 }
