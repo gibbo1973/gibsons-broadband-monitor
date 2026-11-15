@@ -117,5 +117,11 @@
   "Just now": "Precis nu",
   "Download and upload line graph": "Linjediagram för ned- och uppladdning",
   "Latency line graph": "Linjediagram för latens",
-  "History period": "Historikperiod"
+  "History period": "Historikperiod",
+  "Main navigation": "Huvudnavigering",
+  "Mobile navigation": "Mobil navigering",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "Data lagras tills vidare om du inte tar bort appens beständiga datakatalog.",
+  "If accessing the app from the public internet, configure": "Om du öppnar appen från det offentliga internet ska du konfigurera",
+  "and HTTPS through a trusted reverse proxy.": "och HTTPS via en betrodd omvänd proxy.",
+  "Incorrect password": "Felaktigt lösenord"
 }
