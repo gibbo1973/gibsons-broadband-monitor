@@ -42,6 +42,14 @@ function showStatus(data){state.status=data;const latest=data.latest,probe=data.
   if(document.activeElement!==$('speed-interval'))$('speed-interval').value=data.speed_interval;
   if(document.activeElement!==$('probe-interval'))$('probe-interval').value=data.probe_interval;
   if(document.activeElement!==$('slow-threshold'))$('slow-threshold').value=data.slow_threshold;
+  for(const [key,id] of [['alert_outage','alert-outage'],['alert_restored','alert-restored'],['alert_slow','alert-slow']]){
+    if(document.activeElement!==$(id))$(id).checked=Boolean(data[key]);
+  }
+  const configured=Boolean(data.alerts_configured);
+  const alertStatus=$('alert-config-status');
+  alertStatus.textContent=configured?t('Notifications ready'):t('Notifications not configured');
+  alertStatus.classList.toggle('unconfigured',!configured);
+  $('test-alert-btn').disabled=!configured;
 }
 
 // PCHIP-style monotone Bezier tangents: attractive smooth curves without overshoot
@@ -152,7 +160,46 @@ function prettyDuration(seconds){if(seconds==null)return t('In progress');second
 async function loadOutages(){try{const data=await jsonFetch('/api/outages');const body=$('outages-table');body.replaceChildren();if(!data.outages.length){const tr=document.createElement('tr');tr.append(cell(t('No confirmed outages have been recorded.')));body.append(tr);return}for(const o of data.outages){const tr=document.createElement('tr');tr.append(cell(formatDate(o.started)),cell(formatDate(o.ended)),cell(prettyDuration(o.duration_seconds)),cell(o.ended?t('Restored'):t('Ongoing'),o.ended?'result-ok':'result-failed'));body.append(tr)}}catch(e){toast(e.message)}}
 async function runNow(){try{await jsonFetch('/api/run',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard'}});toast(t('Speed test started. The dashboard will update when it finishes.'));await loadStatus()}catch(e){toast(t('Could not start test: {reason}',{reason:e.message}))}}
 async function saveSettings(e){e.preventDefault();const payload={speed_interval:+$('speed-interval').value,probe_interval:+$('probe-interval').value,slow_threshold:+$('slow-threshold').value};try{await jsonFetch('/api/settings',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'},body:JSON.stringify(payload)});$('settings-message').textContent=t('Saved');await loadStatus();toast(t('Settings saved'))}catch(e){$('settings-message').textContent=e.message}}
-async function init(){
+async 
+async function loadStatistics(){
+  try{
+    const data=await jsonFetch('/api/statistics');
+    $('stats-test-count').textContent=t('{count} successful tests in the last 30 days', {
+      count:Number(data.samples||0).toLocaleString(locale())
+    });
+    for(const key of ['download','upload','ping','jitter']){
+      for(const [field,suffix] of [['average','avg'],['minimum','min'],['maximum','max']]){
+        $(`stats-${key}-${suffix}`).textContent=number(data[key]?.[field],1);
+      }
+    }
+  }catch(error){toast(t('Could not load statistics: {reason}',{reason:error.message}))}
+}
+async function saveAlerts(event){
+  event.preventDefault();
+  const payload={
+    alert_outage:$('alert-outage').checked?1:0,
+    alert_restored:$('alert-restored').checked?1:0,
+    alert_slow:$('alert-slow').checked?1:0
+  };
+  try{
+    await jsonFetch('/api/settings',{method:'POST',headers:{
+      'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'
+    },body:JSON.stringify(payload)});
+    $('alert-settings-message').textContent=t('Saved');
+    toast(t('Alert preferences saved'));
+    await loadStatus();
+  }catch(error){$('alert-settings-message').textContent=error.message}
+}
+async function testAlert(){
+  const button=$('test-alert-btn');
+  button.disabled=true;
+  try{
+    await jsonFetch('/api/alerts/test',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard'}});
+    toast(t('Test notification sent'));
+  }catch(error){toast(t('Could not send test notification: {reason}',{reason:error.message}))}
+  finally{button.disabled=false}
+}
+function init(){
   await window.GBM_I18N.init();
   makeCanvasChart('speed-chart',[{key:'download',label:t('Download'),unit:'Mbps',color:palette.download},{key:'upload',label:t('Upload'),unit:'Mbps',color:palette.upload}],'speed-empty','speed-tip');
   makeCanvasChart('latency-chart',[{key:'ping',label:t('Ping'),unit:'ms',color:palette.ping}],'latency-empty','latency-tip');
@@ -161,12 +208,14 @@ async function init(){
   $('custom-range-btn').addEventListener('click',()=>$('date-range').classList.toggle('open'));
   $('apply-range').addEventListener('click',()=>{state.period='custom';document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('selected'));loadHistory()});
   $('run-btn').addEventListener('click',runNow);$('settings-form').addEventListener('submit',saveSettings);
+  $('alert-settings-form').addEventListener('submit',saveAlerts);
+  $('test-alert-btn').addEventListener('click',testAlert);
   if(typeof ResizeObserver!=='undefined'){const obs=new ResizeObserver(()=>drawAll());obs.observe($('speed-chart').parentElement);obs.observe($('latency-chart').parentElement)}
   else window.addEventListener('resize',drawAll);
   function updateClock(){$('clock').textContent=new Date().toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}
   updateClock();setInterval(updateClock,30000);
-  loadStatus();loadHistory();
-  setInterval(()=>{if(document.visibilityState==='visible'){loadStatus();if(state.view==='overview')loadHistory()}},30000);
+  loadStatus();loadHistory();loadStatistics();
+  setInterval(()=>{if(document.visibilityState==='visible'){loadStatus();if(state.view==='overview'){loadHistory();loadStatistics()}}},30000);
 }
 document.addEventListener('DOMContentLoaded',init);
 })();
