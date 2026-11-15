@@ -51,6 +51,11 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
     button.dataset.view = view;
     return button;
   });
+  const statsButtons = ['24h','7d','30d','90d','1y','all'].map(period => {
+    const button = fakeElement('stats-period-'+period);
+    button.dataset.statsPeriod = period;
+    return button;
+  });
   const views = ['overview', 'history', 'outages', 'settings'].map(view => getElement('view-' + view));
   const document = {
     activeElement: null,
@@ -59,6 +64,7 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
     createElement: () => fakeElement(),
     querySelectorAll(selector) {
       if (selector === '[data-view]') return navButtons;
+      if (selector === '[data-stats-period]') return statsButtons;
       if (selector === '.view') return views;
       return [];
     },
@@ -85,16 +91,21 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
     },
     '/api/history': {points: []},
     '/api/statistics': {
-      samples: 0, download: {}, upload: {}, ping: {}, jitter: {}
+      period: '30d', samples: 0, probe_samples: 0, uptime: null,
+      outages: 0, first_sample: null,
+      download: {}, upload: {}, ping: {}, jitter: {}
     },
     '/api/results': {results: []},
     '/api/outages': {outages: []}
   };
   const fetch = async url => {
     const route = String(url).split('?')[0];
-    calls.push(route);
+    calls.push(String(url));
     assert.ok(Object.hasOwn(dataByRoute, route), 'Unexpected API request: ' + url);
-    return {ok: true, status: 200, json: async () => dataByRoute[route]};
+    const payload=route==='/api/statistics' && String(url).includes('period=1y')
+      ? {...dataByRoute[route],period:'1y',samples:12,uptime:99.5,outages:3,first_sample:'2026-10-30T00:00:00+00:00'}
+      : dataByRoute[route];
+    return {ok: true, status: 200, json: async () => payload};
   };
   const sandbox = {
     document, window, fetch, Date, Intl,
@@ -113,11 +124,19 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
   await new Promise(resolve => setImmediate(resolve));
 
   assert.ok(calls.includes('/api/status'));
-  assert.ok(calls.includes('/api/history'));
-  assert.ok(calls.includes('/api/statistics'));
+  assert.ok(calls.some(url => url.startsWith('/api/history')));
+  assert.ok(calls.includes('/api/statistics?period=30d'));
   assert.equal(getElement('connection-pill').lastChild.textContent, 'Online');
   navButtons[1].click();
   await new Promise(resolve => setImmediate(resolve));
   assert.ok(getElement('view-history').classList.contains('visible'));
   assert.ok(calls.includes('/api/results'));
+  statsButtons[4].click();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.ok(calls.includes('/api/statistics?period=1y'));
+  assert.equal(getElement('stats-test-count').textContent, '12 successful tests in selected period');
+  assert.equal(getElement('uptime').textContent, '99.50');
+  assert.equal(getElement('outages-count').textContent, '3');
+  assert.equal(getElement('uptime-period-label').textContent, '· LAST YEAR');
+  assert.ok(statsButtons[4].classList.contains('selected'));
 });
