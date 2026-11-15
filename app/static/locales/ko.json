@@ -117,5 +117,11 @@
   "Just now": "방금",
   "Download and upload line graph": "다운로드 및 업로드 꺾은선 그래프",
   "Latency line graph": "지연 시간 꺾은선 그래프",
-  "History period": "기록 조회 기간"
+  "History period": "기록 조회 기간",
+  "Main navigation": "기본 탐색",
+  "Mobile navigation": "모바일 탐색",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "앱의 영구 데이터 폴더를 삭제하지 않는 한 데이터는 계속 보관됩니다.",
+  "If accessing the app from the public internet, configure": "공용 인터넷에서 앱에 접속할 경우",
+  "and HTTPS through a trusted reverse proxy.": "및 신뢰할 수 있는 역방향 프록시를 통한 HTTPS를 설정하세요.",
+  "Incorrect password": "비밀번호가 올바르지 않습니다"
 }
