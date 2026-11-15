@@ -117,5 +117,11 @@
   "Just now": "Zojuist",
   "Download and upload line graph": "Lijngrafiek voor download en upload",
   "Latency line graph": "Lijngrafiek voor latentie",
-  "History period": "Geschiedenisperiode"
+  "History period": "Geschiedenisperiode",
+  "Main navigation": "Hoofdnavigatie",
+  "Mobile navigation": "Mobiele navigatie",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "Gegevens blijven onbeperkt bewaard, tenzij u de map met permanente appgegevens verwijdert.",
+  "If accessing the app from the public internet, configure": "Als u de app vanaf het openbare internet opent, configureer dan",
+  "and HTTPS through a trusted reverse proxy.": "en HTTPS via een vertrouwde reverseproxy.",
+  "Incorrect password": "Onjuist wachtwoord"
 }
