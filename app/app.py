@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
-VERSION = "0.3.0-beta.2"
+VERSION = "0.3.0-beta.3"
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DB_PATH = DATA_DIR / "monitor.sqlite3"
 PORT = int(os.getenv("PORT", "8765"))
@@ -313,21 +313,64 @@ def monitor_slow_speed(download: float):
             )
 
 
-def speed_statistics(days: int = 30) -> dict:
-    cutoff = now_iso_from_delta(days=days)
+# Rolling windows; 'all' includes every recorded sample since installation.
+STATS_PERIODS = {
+    "24h": timedelta(hours=24),
+    "7d": timedelta(days=7),
+    "30d": timedelta(days=30),
+    "90d": timedelta(days=90),
+    "1y": timedelta(days=365),
+    "all": None,
+}
+
+
+def speed_statistics(period: str = "30d") -> dict:
+    """Actual speed measurements and probe-based availability for a selected period.
+
+    Uptime is the percentage of successful recorded HTTP probes, not a
+    time-weighted SLA guarantee or a measured ICMP packet-loss percentage.
+    Count outages that overlap the window, including events already underway.
+    """
+    if period not in STATS_PERIODS:
+        raise ValueError("Unknown statistics period")
+    duration = STATS_PERIODS[period]
+    cutoff = (datetime.now(timezone.utc) - duration).isoformat(timespec="seconds") if duration else None
+    condition = " AND ts>=?" if cutoff else ""
+    params = (cutoff,) if cutoff else ()
     with db() as con:
         row = con.execute(
-            "SELECT COUNT(*) samples,"
+            "SELECT COUNT(*) samples,MIN(ts) first_sample,"
             "AVG(download) avg_download,MIN(download) min_download,MAX(download) max_download,"
             "AVG(upload) avg_upload,MIN(upload) min_upload,MAX(upload) max_upload,"
             "AVG(ping) avg_ping,MIN(ping) min_ping,MAX(ping) max_ping,"
             "AVG(jitter) avg_jitter,MIN(jitter) min_jitter,MAX(jitter) max_jitter "
-            "FROM speed_tests WHERE status='ok' AND ts>=?", (cutoff,)
+            "FROM speed_tests WHERE status='ok'" + condition, params
         ).fetchone()
         failures = con.execute(
-            "SELECT COUNT(*) n FROM speed_tests WHERE status='failed' AND ts>=?", (cutoff,)
+            "SELECT COUNT(*) n FROM speed_tests WHERE status='failed'" + condition, params
         ).fetchone()["n"]
-    result = {"period": f"{days}d", "samples": row["samples"], "failed_tests": failures}
+        probes = con.execute(
+            "SELECT COUNT(*) samples,SUM(online) online,MIN(ts) first_probe FROM probes WHERE 1=1"
+            + condition, params
+        ).fetchone()
+        if cutoff:
+            # An outage started before the period can still overlap the period.
+            outages = con.execute(
+                "SELECT COUNT(*) n FROM outages WHERE ended IS NULL OR ended>=?", (cutoff,)
+            ).fetchone()["n"]
+        else:
+            outages = con.execute("SELECT COUNT(*) n FROM outages").fetchone()["n"]
+
+    result = {
+        "period": period,
+        "samples": row["samples"],
+        "failed_tests": failures,
+        "first_sample": row["first_sample"],
+        "probe_samples": probes["samples"],
+        "first_probe": probes["first_probe"],
+        "uptime": round(100 * probes["online"] / probes["samples"], 2) if probes["samples"] else None,
+        "outages": outages,
+    }
     for key in ("download", "upload", "ping", "jitter"):
         result[key] = {
             metric: (round(row[f"{column}_{key}"], 2) if row[f"{column}_{key}"] is not None else None)
@@ -507,7 +550,10 @@ def api_status():
 @app.get("/api/statistics")
 @protected
 def api_statistics():
-    return jsonify(speed_statistics())
+    period = request.args.get("period", "30d")
+    if period not in STATS_PERIODS:
+        return jsonify({"error": "Unknown statistics period"}), 400
+    return jsonify(speed_statistics(period))
 
 
 @app.get("/api/history")
