@@ -143,5 +143,13 @@
   "Alert preferences saved": "通知偏好已保存",
   "Test notification sent": "测试通知已发送",
   "Could not send test notification: {reason}": "无法发送测试通知：{reason}",
-  "Could not load statistics: {reason}": "无法加载统计数据：{reason}"
+  "Could not load statistics: {reason}": "无法加载统计数据：{reason}",
+  "Connection statistics": "连接统计",
+  "Statistics period": "统计时间范围",
+  "· LAST 24 HOURS": "· 最近24小时",
+  "· LAST 7 DAYS": "· 最近7天",
+  "· LAST 90 DAYS": "· 最近90天",
+  "· LAST YEAR": "· 最近1年",
+  "Oldest test in this period: {date}": "此时间段内最早的测试：{date}",
+  "No successful tests recorded in this period": "此时间段没有成功的测试记录"
 }
