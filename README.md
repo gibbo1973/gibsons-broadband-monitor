@@ -20,6 +20,7 @@
 - Outage start/end detection with two consecutive failures required to begin an event
 - Selectable **24h, 7d, 30d, 90d, 1y and all-time uptime/outage totals**, based on recorded connectivity probes and outages that overlap each period
 - **Selectable historical statistics (24h to all time):** actual average, minimum and maximum download, upload, ping and jitter across successful measurements
+- **Server Network Usage:** full-size dashboard with downloaded/uploaded/total bytes, daily or monthly traffic graphs, month-to-date and observed daily averages, selected physical/bridge interface, and optional visual monthly usage warning; read-only host counter mount required
 - Optional **ntfy phone alerts** for connection outages, restorations and slow download speeds; queued while offline and sent on reconnection
 - SQLite storage in `/data`, with no automatic deletion
 - Recent test and outage tables; export all speed-test results as CSV
@@ -53,6 +54,7 @@ Use the Unraid **Docker > Add Container** interface (no local image build requir
 - **Network:** `bridge`; **Privileged:** off
 - **Port:** host `8765` -> container `8765/tcp`
 - **Persistent app data:** host `/mnt/user/appdata/gibsons-broadband-monitor` -> container `/data` (read/write)
+- **Host network counter file:** host `/proc/1/net/dev` -> container `/host/proc/net/dev` (**read-only**, required for host-wide traffic logging)
 - **Environment:** `TZ=Europe/London` (change timezone as appropriate)
 - **WebUI:** `http://[IP]:[PORT:8765]/`
 
@@ -61,6 +63,8 @@ Open `http://YOUR-UNRAID-IP:8765`. The first speed test runs soon after startup.
 For any public or remote access, set `DASHBOARD_PASSWORD` and a long random `SECRET_KEY`, and use HTTPS through a secure reverse proxy. Keep the dashboard on a trusted private network by default.
 
 Update the image through Unraid Docker's **Check for Updates**. The `/data` mapping preserves measurements across container updates. Do not delete the appdata directory unless you intend to delete recorded results.
+
+**Existing Unraid installations:** Updating a Docker image does **not** automatically add a new template path to an existing container. To activate **Server Network Usage**, select the container in **Unraid → Docker → Edit**, choose **Add another Path**, set the host path to `/proc/1/net/dev`, the container path to `/host/proc/net/dev` and the access mode to **Read Only**, then apply. Do **not** change the existing `/data` mapping or switch to host networking. The dashboard clearly explains this if the mount is missing.
 
 ## Alerts and notifications (optional)
 
@@ -84,9 +88,19 @@ Slow-speed alerts trigger once when a successful speed test falls below the thre
 
 The dashboard's **Connection statistics** section supports **24 hours, 7 days, 30 days, 90 days, 1 year (rolling 365 days), and all time**, with 30 days selected by default. It shows arithmetic averages and recorded minima/maxima for download, upload, ping and jitter using successful tests; missing readings appear as dashes. These are actual measurements, not estimated speeds. The statistics area also updates the **uptime percentage and number of outages** at the top of the overview for the selected period (outages include those overlapping the period, even if they began earlier). Uptime is the proportion of successful HTTP connectivity probes among recorded checks, **not an ICMP packet-loss measurement or time-weighted SLA guarantee**. When less than a year's history exists, the 1-year and all-time views use only the measurements actually collected and display the date of the oldest test in the period.
 
+## Server Network Usage (v0.4.0-beta.1)
+
+The **Network usage** tab uses the same dark navy layout as the rest of the dashboard and shows real bytes received (**downloaded**) and transmitted (**uploaded**) by **one selected host network interface**. Choose **Auto** (prefers Unraid's `br0`, then `bond0`, then `eth0`) or select another interface. The interface selection and monthly warning level are stored locally in `/data/monitor.sqlite3`.
+
+- **Graph and totals:** 24 hours (hourly buckets), 7/30/90 days (daily buckets), one rolling year or all time (monthly buckets), plus CSV export of actual recorded buckets.
+- **Sampling:** readings every 60 seconds from `/proc/1/net/dev` mounted read-only. Counter differences are retained in SQLite. Reboots, counter resets and monitoring gaps longer than 210 seconds start a fresh baseline rather than inventing usage. The first sample establishes a baseline, so meaningful totals start after the next sample. Data is not backfilled.
+- **Monthly totals:** current UTC calendar month, plus average daily transfer during actively observed sample intervals. You can set an optional monthly warning level in GB (0 to disable); a progress bar highlights the threshold. This is an **in-dashboard warning**, not a phone notification.
+- **Scope:** server network traffic (including SMB/NFS LAN file copies, Docker traffic and internet transfers), **not whole-home internet usage or an ISP billing meter**. For accurate totals, use **one** host interface; summing a bridge and its underlying physical interface can double-count traffic.
+- **Security:** the host mount is a single read-only counters file; no Docker socket, privilege escalation, host networking, router credentials or external account is required. Without the mount, host-usage logging is visibly unavailable, rather than showing container traffic as host traffic.
+
 ## Screenshots
 
-A clean overview with large digital download/upload/latency readings, curved performance graphs, uptime stats and outage history. Screenshots will be added to this repository for the Community Applications listing.
+Current overview screenshots are referenced by the Unraid Community Apps XML template. A new screenshot of the Network Usage tab can be added after the feature is deployed to a running Unraid server.
 
 ## Docker Compose install
 
@@ -104,6 +118,7 @@ Compose persists the database in the Docker named volume `gbm-data`. Do not dele
 | --- | --- | --- |
 | `PORT` | `8765` | App listening port (Docker image starts Waitress on 8765) |
 | `DATA_DIR` | `/data` | Persistent SQLite directory |
+| `HOST_NET_DEV` | `/host/proc/net/dev` | Read-only host counter file to bind from host `/proc/1/net/dev` |
 | `SPEED_INTERVAL_MINUTES` | `60` | Initial full speed-test interval (min 15, max 1440) |
 | `PROBE_INTERVAL_SECONDS` | `30` | Initial availability-test interval (min 15, max 3600) |
 | `SLOW_DOWNLOAD_MBPS` | `100` | Initial low-speed flag, editable in UI |
