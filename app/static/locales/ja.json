@@ -143,5 +143,13 @@
   "Alert preferences saved": "通知設定を保存しました",
   "Test notification sent": "テスト通知を送信しました",
   "Could not send test notification: {reason}": "テスト通知を送信できませんでした：{reason}",
-  "Could not load statistics: {reason}": "統計情報を読み込めませんでした：{reason}"
+  "Could not load statistics: {reason}": "統計情報を読み込めませんでした：{reason}",
+  "Connection statistics": "接続統計",
+  "Statistics period": "統計の表示期間",
+  "· LAST 24 HOURS": "· 過去24時間",
+  "· LAST 7 DAYS": "· 過去7日間",
+  "· LAST 90 DAYS": "· 過去90日間",
+  "· LAST YEAR": "· 過去1年間",
+  "Oldest test in this period: {date}": "この期間の最も古いテスト：{date}",
+  "No successful tests recorded in this period": "この期間に成功したテストはありません"
 }
