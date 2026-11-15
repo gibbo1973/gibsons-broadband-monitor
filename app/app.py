@@ -21,10 +21,11 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from contextlib import contextmanager
 from pathlib import Path
+from urllib.parse import urlsplit
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
-VERSION = "0.2.0-beta.1"
+VERSION = "0.3.0-beta.1"
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DB_PATH = DATA_DIR / "monitor.sqlite3"
 PORT = int(os.getenv("PORT", "8765"))
@@ -37,6 +38,9 @@ TIMEZONE_NAME = os.getenv("TZ", "Europe/London")
 SPEEDTEST_BIN = os.getenv("SPEEDTEST_BIN", "/usr/local/bin/speedtest-go")
 SPEEDTEST_TIMEOUT = 180
 CHECK_URLS = ["https://www.google.com/generate_204", "https://www.cloudflare.com/cdn-cgi/trace"]
+NTFY_URL = os.getenv("ALERT_NTFY_URL", "").strip()
+NTFY_TIMEOUT = 5
+ALERT_RETRY_SECONDS = 300
 
 app = Flask(__name__, static_folder="static", template_folder="templates")
 app.secret_key = SECRET or os.urandom(32)
@@ -103,11 +107,25 @@ def initialize():
                 key TEXT PRIMARY KEY,
                 value TEXT NOT NULL
             );
+            CREATE TABLE IF NOT EXISTS alert_events (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                event TEXT NOT NULL,
+                message TEXT NOT NULL,
+                created TEXT NOT NULL,
+                sent TEXT,
+                attempts INTEGER NOT NULL DEFAULT 0,
+                last_attempt TEXT
+            );
+            CREATE INDEX IF NOT EXISTS alert_pending_idx ON alert_events(sent,id);
         """)
         for key, value in {
             "speed_interval": DEFAULT_SPEED_INTERVAL,
             "probe_interval": DEFAULT_PROBE_INTERVAL,
             "slow_threshold": DEFAULT_THRESHOLD,
+            "alert_outage": 1,
+            "alert_restored": 1,
+            "alert_slow": 0,
+            "slow_alert_active": 0,
         }.items():
             con.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (key, str(value)))
 
@@ -212,6 +230,112 @@ def parse_speed_result(payload):
     return (dl, ul, ping, jitter, str(server)[:180])
 
 
+
+def alert_enabled(con, name: str) -> bool:
+    row = con.execute("SELECT value FROM settings WHERE key=?", (name,)).fetchone()
+    return row is not None and row["value"] == "1"
+
+
+def queue_alert(con, event: str, message: str, preference: str):
+    """Record an opted-in alert transactionally; do not depend on connectivity."""
+    if not NTFY_URL or not alert_enabled(con, preference):
+        return
+    con.execute(
+        "INSERT INTO alert_events(event,message,created) VALUES(?,?,?)",
+        (event, message, now_iso()),
+    )
+
+
+def send_ntfy(event: str, message: str):
+    """Publish plain text to a user-provided ntfy topic (no credentials in API)."""
+    parts = urlsplit(NTFY_URL)
+    if parts.scheme not in ("https", "http") or not parts.netloc or parts.username or parts.password:
+        raise ValueError("Invalid ntfy topic URL")
+    headers = {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Title": "Gibson's Broadband Monitor",
+        "Tags": "warning" if event in ("outage", "slow") else "white_check_mark",
+    }
+    req = urllib.request.Request(
+        NTFY_URL, data=message.encode("utf-8"), headers=headers, method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=NTFY_TIMEOUT) as response:
+        if not 200 <= response.status < 300:
+            raise OSError("Notification service returned non-success status")
+
+
+def flush_pending_alerts():
+    """Retry unsent alerts only after connectivity returns, without flooding."""
+    if not NTFY_URL:
+        return
+    for _ in range(5):
+        with db() as con:
+            event = con.execute(
+                "SELECT id,event,message,last_attempt FROM alert_events "
+                "WHERE sent IS NULL ORDER BY id LIMIT 1"
+            ).fetchone()
+        if not event:
+            return
+        when = event["last_attempt"]
+        if when and (datetime.now(timezone.utc) - datetime.fromisoformat(when)).total_seconds() < ALERT_RETRY_SECONDS:
+            return
+        try:
+            send_ntfy(event["event"], event["message"])
+        except (OSError, ValueError, urllib.error.URLError) as exc:
+            log.warning("Notification delivery failed (%s), will retry", type(exc).__name__)
+            with db() as con:
+                con.execute(
+                    "UPDATE alert_events SET attempts=attempts+1,last_attempt=? WHERE id=? AND sent IS NULL",
+                    (now_iso(), event["id"]),
+                )
+            return
+        with db() as con:
+            con.execute("UPDATE alert_events SET sent=?,attempts=attempts+1 WHERE id=? AND sent IS NULL", (now_iso(), event["id"]))
+
+
+def monitor_slow_speed(download: float):
+    """One alert per slow-speed episode; re-arm on a normal test."""
+    threshold = setting("slow_threshold", DEFAULT_THRESHOLD)
+    low = download < threshold
+    with db() as con:
+        previous = alert_enabled(con, "slow_alert_active")
+        if low and not previous:
+            queue_alert(
+                con, "slow",
+                f"Download speed is {download:.1f} Mbps, below your {threshold} Mbps warning threshold.",
+                "alert_slow",
+            )
+        if low != previous:
+            con.execute(
+                "INSERT INTO settings(key,value) VALUES('slow_alert_active',?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                ("1" if low else "0",),
+            )
+
+
+def speed_statistics(days: int = 30) -> dict:
+    cutoff = now_iso_from_delta(days=days)
+    with db() as con:
+        row = con.execute(
+            "SELECT COUNT(*) samples,"
+            "AVG(download) avg_download,MIN(download) min_download,MAX(download) max_download,"
+            "AVG(upload) avg_upload,MIN(upload) min_upload,MAX(upload) max_upload,"
+            "AVG(ping) avg_ping,MIN(ping) min_ping,MAX(ping) max_ping,"
+            "AVG(jitter) avg_jitter,MIN(jitter) min_jitter,MAX(jitter) max_jitter "
+            "FROM speed_tests WHERE status='ok' AND ts>=?", (cutoff,)
+        ).fetchone()
+        failures = con.execute(
+            "SELECT COUNT(*) n FROM speed_tests WHERE status='failed' AND ts>=?", (cutoff,)
+        ).fetchone()["n"]
+    result = {"period": f"{days}d", "samples": row["samples"], "failed_tests": failures}
+    for key in ("download", "upload", "ping", "jitter"):
+        result[key] = {
+            metric: (round(row[f"{column}_{key}"], 2) if row[f"{column}_{key}"] is not None else None)
+            for metric, column in (("average", "avg"), ("minimum", "min"), ("maximum", "max"))
+        }
+    return result
+
+
 def run_speedtest():
     if _speed_running.is_set():
         return False
@@ -241,6 +365,7 @@ def run_speedtest():
         dl, ul, ping, jitter, server = parse_speed_result(payload)
         with db() as con:
             con.execute("INSERT INTO speed_tests(ts,download,upload,ping,jitter,server,status) VALUES(?,?,?,?,?,?,'ok')", (started, dl, ul, ping, jitter, server))
+        monitor_slow_speed(dl)
         log.info("Speed test: down=%s Mbps up=%s Mbps ping=%s ms", dl, ul, ping)
     except Exception as exc:
         msg = str(exc)[:500]
@@ -277,11 +402,16 @@ def connection_probe():
         if len(rows) >= 2 and all(not row["online"] for row in rows) and not open_event:
             con.execute("INSERT INTO outages(started) VALUES(?)", (rows[-1]["ts"],))
             log.warning("Connectivity outage detected")
+            queue_alert(con, "outage", f"Internet outage detected (started {rows[-1]['ts']} UTC).", "alert_outage")
         elif len(rows) >= 2 and all(row["online"] for row in rows) and open_event:
             first = datetime.fromisoformat(open_event["started"])
             duration = max(0, int((datetime.fromisoformat(timestamp) - first).total_seconds()))
             con.execute("UPDATE outages SET ended=?,duration_seconds=? WHERE id=?", (timestamp, duration, open_event["id"]))
             log.info("Connectivity restored after %s seconds", duration)
+            queue_alert(con, "restored", f"Internet connection restored after {duration} seconds.", "alert_restored")
+    # A stable restored connection is needed before queued notifications can be delivered.
+    if successful and len(rows) == 2 and all(row["online"] for row in rows):
+        flush_pending_alerts()
     return successful
 
 
@@ -311,6 +441,10 @@ def record_status():
         "speed_interval": setting("speed_interval", DEFAULT_SPEED_INTERVAL),
         "probe_interval": setting("probe_interval", DEFAULT_PROBE_INTERVAL),
         "slow_threshold": setting("slow_threshold", DEFAULT_THRESHOLD),
+        "alert_outage": bool(setting("alert_outage", 1)),
+        "alert_restored": bool(setting("alert_restored", 1)),
+        "alert_slow": bool(setting("alert_slow", 0)),
+        "alerts_configured": bool(NTFY_URL),
         "timezone": TIMEZONE_NAME,
         "password_protected": bool(PASSWORD),
     }
@@ -368,6 +502,12 @@ def health():
 @protected
 def api_status():
     return jsonify(record_status())
+
+
+@app.get("/api/statistics")
+@protected
+def api_statistics():
+    return jsonify(speed_statistics())
 
 
 @app.get("/api/history")
@@ -453,7 +593,8 @@ def api_run():
 def api_settings():
     if request.headers.get("X-Requested-With") != "GibsonsDashboard":
         return jsonify({"error": "Invalid request"}), 403
-    fields = {"speed_interval": (15, 1440), "probe_interval": (15, 3600), "slow_threshold": (1, 100000)}
+    fields = {"speed_interval": (15, 1440), "probe_interval": (15, 3600), "slow_threshold": (1, 100000),
+              "alert_outage": (0, 1), "alert_restored": (0, 1), "alert_slow": (0, 1)}
     payload = request.get_json(silent=True) or {}
     updates = {}
     for key, (low, high) in fields.items():
@@ -469,6 +610,21 @@ def api_settings():
         for key, value in updates.items():
             con.execute("INSERT INTO settings(key,value) VALUES(?,?) ON CONFLICT(key) DO UPDATE SET value=excluded.value", (key, value))
     return jsonify({"saved": True, "settings": updates})
+
+
+@app.post("/api/alerts/test")
+@protected
+def api_test_alert():
+    if request.headers.get("X-Requested-With") != "GibsonsDashboard":
+        return jsonify({"error": "Invalid request"}), 403
+    if not NTFY_URL:
+        return jsonify({"error": "Set ALERT_NTFY_URL in the Docker container first"}), 400
+    try:
+        send_ntfy("test", "Test notification from Gibson\'s Broadband Monitor.")
+    except (OSError, ValueError, urllib.error.URLError):
+        log.warning("Test notification failed")
+        return jsonify({"error": "Could not deliver test notification. Check your ntfy URL and network."}), 502
+    return jsonify({"sent": True})
 
 
 @app.get("/api/export.csv")
