@@ -19,4 +19,4 @@ jobs:
       - run: DISABLE_SCHEDULER=1 python -m unittest discover -s tests -v
       - run: node --check app/static/app.js
       - run: node --check app/static/i18n.js
-      - run: node --test tests/test_i18n.mjs
+      - run: node --test tests/test_i18n.mjs tests/test_dashboard_smoke.mjs
