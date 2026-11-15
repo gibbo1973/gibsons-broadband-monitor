@@ -8,6 +8,7 @@ services:
       - "8765:8765"
     volumes:
       - gbm-data:/data
+      - /proc/1/net/dev:/host/proc/net/dev:ro  # Read-only host interface counters (not container-only traffic)
     environment:
       TZ: Europe/London
       SPEED_INTERVAL_MINUTES: "60"
