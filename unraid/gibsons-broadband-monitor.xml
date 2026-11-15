@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Container version="2">
-  <Name>gibsons-broadband-monitor</Name>
+  <Name>Gibsons-Broadband-Monitor</Name>
   <Repository>ghcr.io/gibbo1973/gibsons-broadband-monitor:latest</Repository>
   <Registry>https://ghcr.io</Registry>
   <Network>bridge</Network>
