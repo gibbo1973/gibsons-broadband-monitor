@@ -143,5 +143,13 @@
   "Alert preferences saved": "Notifikationsindstillinger gemt",
   "Test notification sent": "Testnotifikation sendt",
   "Could not send test notification: {reason}": "Kunne ikke sende testnotifikation: {reason}",
-  "Could not load statistics: {reason}": "Kunne ikke indlæse statistik: {reason}"
+  "Could not load statistics: {reason}": "Kunne ikke indlæse statistik: {reason}",
+  "Connection statistics": "Forbindelsesstatistik",
+  "Statistics period": "Statistikperiode",
+  "· LAST 24 HOURS": "· SENESTE 24 TIMER",
+  "· LAST 7 DAYS": "· SENESTE 7 DAGE",
+  "· LAST 90 DAYS": "· SENESTE 90 DAGE",
+  "· LAST YEAR": "· SENESTE ÅR",
+  "Oldest test in this period: {date}": "Ældste test i perioden: {date}",
+  "No successful tests recorded in this period": "Ingen vellykkede test registreret i denne periode"
 }
