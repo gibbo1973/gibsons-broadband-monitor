@@ -327,12 +327,13 @@ def speed_statistics(days: int = 30) -> dict:
         failures = con.execute(
             "SELECT COUNT(*) n FROM speed_tests WHERE status='failed' AND ts>=?", (cutoff,)
         ).fetchone()["n"]
-    return {
-        "period": f"{days}d", "samples": row["samples"], "failed_tests": failures,
-        key: {metric: (round(row[f"{column}_{key}"], 2) if row[f"{column}_{key}"] is not None else None)
-              for metric, column in (("average", "avg"), ("minimum", "min"), ("maximum", "max"))}
-        for key in ("download", "upload", "ping", "jitter")
-    }
+    result = {"period": f"{days}d", "samples": row["samples"], "failed_tests": failures}
+    for key in ("download", "upload", "ping", "jitter"):
+        result[key] = {
+            metric: (round(row[f"{column}_{key}"], 2) if row[f"{column}_{key}"] is not None else None)
+            for metric, column in (("average", "avg"), ("minimum", "min"), ("maximum", "max"))
+        }
+    return result
 
 
 def run_speedtest():
