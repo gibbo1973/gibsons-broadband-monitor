@@ -160,7 +160,6 @@ function prettyDuration(seconds){if(seconds==null)return t('In progress');second
 async function loadOutages(){try{const data=await jsonFetch('/api/outages');const body=$('outages-table');body.replaceChildren();if(!data.outages.length){const tr=document.createElement('tr');tr.append(cell(t('No confirmed outages have been recorded.')));body.append(tr);return}for(const o of data.outages){const tr=document.createElement('tr');tr.append(cell(formatDate(o.started)),cell(formatDate(o.ended)),cell(prettyDuration(o.duration_seconds)),cell(o.ended?t('Restored'):t('Ongoing'),o.ended?'result-ok':'result-failed'));body.append(tr)}}catch(e){toast(e.message)}}
 async function runNow(){try{await jsonFetch('/api/run',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard'}});toast(t('Speed test started. The dashboard will update when it finishes.'));await loadStatus()}catch(e){toast(t('Could not start test: {reason}',{reason:e.message}))}}
 async function saveSettings(e){e.preventDefault();const payload={speed_interval:+$('speed-interval').value,probe_interval:+$('probe-interval').value,slow_threshold:+$('slow-threshold').value};try{await jsonFetch('/api/settings',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'},body:JSON.stringify(payload)});$('settings-message').textContent=t('Saved');await loadStatus();toast(t('Settings saved'))}catch(e){$('settings-message').textContent=e.message}}
-async 
 async function loadStatistics(){
   try{
     const data=await jsonFetch('/api/statistics');
