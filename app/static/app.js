@@ -2,40 +2,43 @@
 (() => {
 'use strict';
 const $ = (id) => document.getElementById(id);
+const t = (message, args) => window.GBM_I18N.t(message, args);
+const locale = () => window.GBM_I18N.locale;
 const state = {period:'7d', history:[], status:null, view:'overview', charts:{}};
 const palette = {download:'#35d4fa', upload:'#50edac', ping:'#c29cff'};
 const number = (n, digits=1) => n == null || !Number.isFinite(Number(n)) ? '—' : Number(n).toFixed(digits);
 const formatDate = (value, options={dateStyle:'medium',timeStyle:'short'}) => {
   if (!value) return '—';
-  const date = new Date(value); return Number.isNaN(+date) ? '—' : date.toLocaleString(undefined,options);
+  const date = new Date(value); return Number.isNaN(+date) ? '—' : date.toLocaleString(locale(),options);
 };
 const ago = value => {
-  if(!value) return 'Not yet';
+  if(!value) return t('Not yet');
   const s=Math.round((Date.now()-new Date(value).getTime())/1000);
-  if(s<0) return 'Just now';
-  if(s<90) return s+'s ago';
-  if(s<5400) return Math.floor(s/60)+'m ago';
-  if(s<172800) return Math.floor(s/3600)+'h ago';
+  const rel = new Intl.RelativeTimeFormat(locale(), {numeric:'auto',style:'short'});
+  if(s<0) return t('Just now');
+  if(s<90) return rel.format(-s,'second');
+  if(s<5400) return rel.format(-Math.floor(s/60),'minute');
+  if(s<172800) return rel.format(-Math.floor(s/3600),'hour');
   return formatDate(value,{dateStyle:'short'});
 };
-async function jsonFetch(url, opts){const r=await fetch(url,{cache:'no-store',credentials:'same-origin',...opts});if(r.status===401){location.assign('/login');throw Error('Sign in required')}let data=await r.json();if(!r.ok)throw Error(data.error||'Request failed');return data}
+async function jsonFetch(url, opts){const r=await fetch(url,{cache:'no-store',credentials:'same-origin',...opts});if(r.status===401){location.assign('/login');throw Error(t('Sign in required'))}let data=await r.json();if(!r.ok)throw Error(data.error||t('Request failed'));return data}
 function toast(message){const e=$('toast');e.textContent=message;e.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove('show'),4200)}
-function setView(view){state.view=view;document.querySelectorAll('.view').forEach(x=>x.classList.toggle('visible',x.id==='view-'+view));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));$('page-name').textContent=view.charAt(0).toUpperCase()+view.slice(1);window.scrollTo({top:0,behavior:'instant'});if(view==='overview')requestAnimationFrame(drawAll);if(view==='history')loadResults();if(view==='outages')loadOutages()}
+function setView(view){state.view=view;document.querySelectorAll('.view').forEach(x=>x.classList.toggle('visible',x.id==='view-'+view));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));$('page-name').textContent=t(({overview:'Overview',history:'History',outages:'Outages',settings:'Settings'})[view]||view);window.scrollTo({top:0,behavior:'instant'});if(view==='overview')requestAnimationFrame(drawAll);if(view==='history')loadResults();if(view==='outages')loadOutages()}
 function showStatus(data){state.status=data;const latest=data.latest,probe=data.last_probe;
   $('down-value').textContent=number(latest?.download);$('up-value').textContent=number(latest?.upload);
-  $('ping-value').textContent=number(latest?.ping,0);$('ping-note').textContent=latest?.jitter!=null?'Jitter '+number(latest.jitter)+' ms':'Most recent test';
+  $('ping-value').textContent=number(latest?.ping,0);$('ping-note').textContent=latest?.jitter!=null?t('Jitter')+' '+number(latest.jitter)+' ms':t('Most recent test');
   $('uptime').textContent=number(data.uptime30,2);$('outages-count').textContent=data.outages30;
-  $('tests-count').textContent=data.speed_samples.toLocaleString();$('last-test').textContent=ago(latest?.ts);
+  $('tests-count').textContent=data.speed_samples.toLocaleString(locale());$('last-test').textContent=ago(latest?.ts);
   $('probe-every').textContent=data.probe_interval+'s';$('last-check').textContent=ago(probe?.ts);
   const pill=$('connection-pill'), indicator=$('status-indicator');
   pill.classList.toggle('offline',data.online===false);pill.classList.toggle('unknown',data.online==null);
-  const label=data.online==null?'Checking…':data.online?'Online':'Offline';
-  pill.lastChild.textContent=label;indicator.textContent=label.toUpperCase();indicator.style.color=data.online===false?'#ff7888':data.online===true?'#50edac':'#9ab3cb';
-  $('status-title').textContent=data.online==null?'Checking connection':data.online?'Internet connection active':'Connection unavailable';
-  $('status-detail').textContent=data.current_outage?'Outage detected since '+formatDate(data.current_outage.started):data.online?'Connectivity checks are responding normally.':'Waiting for an internet response.';
-  $('down-note').textContent=latest?.download!=null && latest.download<data.slow_threshold?'Below '+data.slow_threshold+' Mbps warning':'Most recent test';
-  const btn=$('run-btn');btn.disabled=Boolean(data.running);$('run-label').textContent=data.running?'Testing in progress…':'Run speed test';
-  if(data.last_attempt?.status==='failed'&&latest?.ts!==data.last_attempt.ts){$('last-test').title='Latest test failed: '+(data.last_attempt.error||'unknown reason')}
+  const label=data.online==null?t('Checking…'):data.online?t('Online'):t('Offline');
+  pill.lastChild.textContent=label;indicator.textContent=label.toLocaleUpperCase(locale());indicator.style.color=data.online===false?'#ff7888':data.online===true?'#50edac':'#9ab3cb';
+  $('status-title').textContent=data.online==null?t('Checking connection'):data.online?t('Internet connection active'):t('Connection unavailable');
+  $('status-detail').textContent=data.current_outage?t('Outage detected since {date}',{date:formatDate(data.current_outage.started)}):data.online?t('Connectivity checks are responding normally.'):t('Waiting for an internet response.');
+  $('down-note').textContent=latest?.download!=null && latest.download<data.slow_threshold?t('Below {threshold} Mbps warning',{threshold:data.slow_threshold}):t('Most recent test');
+  const btn=$('run-btn');btn.disabled=Boolean(data.running);$('run-label').textContent=data.running?t('Testing in progress…'):t('Run speed test');
+  if(data.last_attempt?.status==='failed'&&latest?.ts!==data.last_attempt.ts){$('last-test').title=t('Latest test failed: {reason}',{reason:data.last_attempt.error||t('unknown reason')})}
   if(document.activeElement!==$('speed-interval'))$('speed-interval').value=data.speed_interval;
   if(document.activeElement!==$('probe-interval'))$('probe-interval').value=data.probe_interval;
   if(document.activeElement!==$('slow-threshold'))$('slow-threshold').value=data.slow_threshold;
@@ -99,7 +102,7 @@ function drawChart(chart){
   ctx.textAlign='center';
   for(let i=0;i<=4;i++){
     const t=start+(end-start)*i/4;
-    const label=(end-start<=48*3600000)?new Date(t).toLocaleString(undefined,{hour:'2-digit',minute:'2-digit'}):new Date(t).toLocaleDateString(undefined,{month:'short',day:'numeric'});
+    const label=(end-start<=48*3600000)?new Date(t).toLocaleString(locale(),{hour:'2-digit',minute:'2-digit'}):new Date(t).toLocaleDateString(locale(),{month:'short',day:'numeric'});
     ctx.fillText(label,box.left+i/4*(box.right-box.left),height-7);
   }
   ctx.restore();
@@ -134,24 +137,25 @@ async function loadHistory(){
       if(to)qs+='&to='+encodeURIComponent(new Date(to).toISOString());
     }
     const result=await jsonFetch('/api/history?'+qs);state.history=result.points||[];
-    $('speed-summary').textContent=state.history.filter(x=>x.status==='ok').length.toLocaleString()+' successful tests in selected period';
+    $('speed-summary').textContent=t('{count} successful tests in selected period',{count:state.history.filter(x=>x.status==='ok').length.toLocaleString(locale())});
     drawAll();
-  }catch(e){toast('Could not load chart: '+e.message)}
+  }catch(e){toast(t('Could not load chart: {reason}',{reason:e.message}))}
 }
 async function loadStatus(){try{showStatus(await jsonFetch('/api/status'))}catch(e){toast(e.message)}}
 function cell(text,cls=''){const td=document.createElement('td');td.textContent=text;td.className=cls;return td}
 async function loadResults(){try{
   const data=await jsonFetch('/api/results');const tbody=$('results-table');tbody.replaceChildren();
-  if(!data.results.length){const tr=document.createElement('tr');tr.append(cell('No tests yet — your first result will appear automatically.'));tbody.append(tr);return}
-  for(const result of data.results){const tr=document.createElement('tr');tr.append(cell(formatDate(result.ts)),cell(result.download==null?'—':number(result.download,2)+' Mbps','value-down'),cell(result.upload==null?'—':number(result.upload,2)+' Mbps','value-up'),cell(result.ping==null?'—':number(result.ping)+' ms'),cell(result.server||'—'),cell(result.status==='ok'?'Success':'Failed','result-'+result.status));if(result.error)tr.title=result.error;tbody.append(tr)}
+  if(!data.results.length){const tr=document.createElement('tr');tr.append(cell(t('No tests yet — your first result will appear automatically.')));tbody.append(tr);return}
+  for(const result of data.results){const tr=document.createElement('tr');tr.append(cell(formatDate(result.ts)),cell(result.download==null?'—':number(result.download,2)+' Mbps','value-down'),cell(result.upload==null?'—':number(result.upload,2)+' Mbps','value-up'),cell(result.ping==null?'—':number(result.ping)+' ms'),cell(result.server||'—'),cell(result.status==='ok'?t('Success'):t('Failed'),'result-'+result.status));if(result.error)tr.title=result.error;tbody.append(tr)}
 }catch(e){toast(e.message)}}
-function prettyDuration(seconds){if(seconds==null)return 'In progress';seconds=Math.max(0,Math.floor(seconds));const d=Math.floor(seconds/86400),h=Math.floor((seconds%86400)/3600),m=Math.floor(seconds%3600/60),s=seconds%60;return [d?d+'d':null,h?h+'h':null,m?m+'m':null,s+'s'].filter(Boolean).join(' ')}
-async function loadOutages(){try{const data=await jsonFetch('/api/outages');const body=$('outages-table');body.replaceChildren();if(!data.outages.length){const tr=document.createElement('tr');tr.append(cell('No confirmed outages have been recorded.'));body.append(tr);return}for(const o of data.outages){const tr=document.createElement('tr');tr.append(cell(formatDate(o.started)),cell(formatDate(o.ended)),cell(prettyDuration(o.duration_seconds)),cell(o.ended?'Restored':'Ongoing',o.ended?'result-ok':'result-failed'));body.append(tr)}}catch(e){toast(e.message)}}
-async function runNow(){try{await jsonFetch('/api/run',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard'}});toast('Speed test started. The dashboard will update when it finishes.');await loadStatus()}catch(e){toast('Could not start test: '+e.message)}}
-async function saveSettings(e){e.preventDefault();const payload={speed_interval:+$('speed-interval').value,probe_interval:+$('probe-interval').value,slow_threshold:+$('slow-threshold').value};try{await jsonFetch('/api/settings',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'},body:JSON.stringify(payload)});$('settings-message').textContent='Saved';await loadStatus();toast('Settings saved')}catch(e){$('settings-message').textContent=e.message}}
-function init(){
-  makeCanvasChart('speed-chart',[{key:'download',label:'Download',unit:'Mbps',color:palette.download},{key:'upload',label:'Upload',unit:'Mbps',color:palette.upload}],'speed-empty','speed-tip');
-  makeCanvasChart('latency-chart',[{key:'ping',label:'Ping',unit:'ms',color:palette.ping}],'latency-empty','latency-tip');
+function prettyDuration(seconds){if(seconds==null)return t('In progress');seconds=Math.max(0,Math.floor(seconds));const d=Math.floor(seconds/86400),h=Math.floor((seconds%86400)/3600),m=Math.floor(seconds%3600/60),s=seconds%60;return [d?d+'d':null,h?h+'h':null,m?m+'m':null,s+'s'].filter(Boolean).join(' ')}
+async function loadOutages(){try{const data=await jsonFetch('/api/outages');const body=$('outages-table');body.replaceChildren();if(!data.outages.length){const tr=document.createElement('tr');tr.append(cell(t('No confirmed outages have been recorded.')));body.append(tr);return}for(const o of data.outages){const tr=document.createElement('tr');tr.append(cell(formatDate(o.started)),cell(formatDate(o.ended)),cell(prettyDuration(o.duration_seconds)),cell(o.ended?t('Restored'):t('Ongoing'),o.ended?'result-ok':'result-failed'));body.append(tr)}}catch(e){toast(e.message)}}
+async function runNow(){try{await jsonFetch('/api/run',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard'}});toast(t('Speed test started. The dashboard will update when it finishes.'));await loadStatus()}catch(e){toast(t('Could not start test: {reason}',{reason:e.message}))}}
+async function saveSettings(e){e.preventDefault();const payload={speed_interval:+$('speed-interval').value,probe_interval:+$('probe-interval').value,slow_threshold:+$('slow-threshold').value};try{await jsonFetch('/api/settings',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'},body:JSON.stringify(payload)});$('settings-message').textContent=t('Saved');await loadStatus();toast(t('Settings saved'))}catch(e){$('settings-message').textContent=e.message}}
+async function init(){
+  await window.GBM_I18N.init();
+  makeCanvasChart('speed-chart',[{key:'download',label:t('Download'),unit:'Mbps',color:palette.download},{key:'upload',label:t('Upload'),unit:'Mbps',color:palette.upload}],'speed-empty','speed-tip');
+  makeCanvasChart('latency-chart',[{key:'ping',label:t('Ping'),unit:'ms',color:palette.ping}],'latency-empty','latency-tip');
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
   document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');state.period=b.dataset.period;$('date-range').classList.remove('open');loadHistory()}));
   $('custom-range-btn').addEventListener('click',()=>$('date-range').classList.toggle('open'));
@@ -159,7 +163,7 @@ function init(){
   $('run-btn').addEventListener('click',runNow);$('settings-form').addEventListener('submit',saveSettings);
   if(typeof ResizeObserver!=='undefined'){const obs=new ResizeObserver(()=>drawAll());obs.observe($('speed-chart').parentElement);obs.observe($('latency-chart').parentElement)}
   else window.addEventListener('resize',drawAll);
-  function updateClock(){$('clock').textContent=new Date().toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'})}
+  function updateClock(){$('clock').textContent=new Date().toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}
   updateClock();setInterval(updateClock,30000);
   loadStatus();loadHistory();
   setInterval(()=>{if(document.visibilityState==='visible'){loadStatus();if(state.view==='overview')loadHistory()}},30000);

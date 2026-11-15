@@ -8,7 +8,7 @@
 
 **Beautiful, lightweight, self-hosted broadband monitoring.** A simple Unraid/Docker dashboard with digital readings, smooth historical speed graphs, latency tracking, real connection checks, unlimited local history and CSV export.
 
-> **Public beta:** The Docker image is published at `ghcr.io/gibbo1973/gibsons-broadband-monitor:latest` and has been tested on Unraid. Community Applications listing is pending review. This is early software; test speeds against another reference and report issues.
+> **Public beta:** The Docker image is published at `ghcr.io/gibbo1973/gibsons-broadband-monitor:latest` and has been tested on Unraid. Community Applications catalogue availability is managed separately by Unraid. This is early software; test speeds against another reference and report issues.
 
 ## What's included
 
@@ -23,9 +23,24 @@
 - Recent test and outage tables; export all speed-test results as CSV
 - Adjustable test interval and low-speed warning threshold from the UI
 - Optional password for dashboard access; no external account or analytics service
+- Dashboard and sign-in screen localized in **16 languages**, with automatic browser detection and a manual language selector
 - Square-cropped app icon derived from the original brand graphic (original proportions preserved; no stretching)
 
 **Requirements:** Docker (or Unraid with Docker), internet connectivity, and storage for the SQLite database. Builds for amd64 and arm64 with the supplied Dockerfile.
+
+## Languages
+
+Version **0.2.0-beta.1** supports **16 interface languages**:
+
+English, French, German, Spanish, Italian, Dutch, Portuguese, Polish, Japanese, Simplified Chinese, Traditional Chinese, Swedish, Korean, Arabic, Danish and Norwegian Bokmål.
+
+- The dashboard opens in the user's preferred **browser language**, falling back to English for unsupported languages.
+- Users can choose a language manually under **Settings → Language** or on the password sign-in page. This preference is saved in the browser, not in the monitoring database.
+- Dates, times and relative-time labels follow the selected language.
+- All interface translation files are bundled locally in the same Docker image. No internet translation API, additional container, or third-party frontend dependency is needed.
+- The application name **Gibson's Broadband Monitor** stays the same in every language. The Unraid Community Applications listing uses a separate template and may continue to appear in English.
+
+Translations are maintained in `app/static/locales/`. Please report any wording or layout issues in GitHub Issues, particularly for languages that read right-to-left.
 
 ## Install on Unraid (prebuilt image)
 
