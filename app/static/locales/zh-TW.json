@@ -117,5 +117,11 @@
   "Just now": "剛剛",
   "Download and upload line graph": "下載和上傳折線圖",
   "Latency line graph": "延遲折線圖",
-  "History period": "歷史時間範圍"
+  "History period": "歷史時間範圍",
+  "Main navigation": "主導覽",
+  "Mobile navigation": "行動裝置導覽",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "除非您刪除應用程式的持續性資料目錄，否則資料將一直保留。",
+  "If accessing the app from the public internet, configure": "如果要從公用網路存取應用程式，請設定",
+  "and HTTPS through a trusted reverse proxy.": "並透過可信任的反向代理啟用 HTTPS。",
+  "Incorrect password": "密碼錯誤"
 }
