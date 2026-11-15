@@ -76,3 +76,6 @@ html[dir="rtl"] .metric-reading,html[dir="rtl"] .stat-value {direction:ltr;justi
 .network-budget-status{font-size:11px;color:#8faabe;margin:0}
 @media(max-width:1100px){.network-quick-stats{flex-wrap:wrap;gap:18px}.network-quick-stats .vertical-divider{display:none}.network-quick-stats>div:not(.vertical-divider){flex:1 1 42%}}
 @media(max-width:600px){.network-interface-control{width:100%}.network-quick-stats{display:grid;grid-template-columns:1fr 1fr}.network-quick-stats>div:not(.vertical-divider){min-width:0}.network-chart-wrap{height:240px}.network-limit-form{align-items:stretch}.network-limit-form button{align-self:center}.mobile-nav button{padding:9px 5px;font-size:10px}}
+
+/* Never extrapolate a daily rate from the first few minutes of host traffic. */
+.network-quick-stats #network-daily.is-pending{font-size:12px;color:#8fa5bc;font-weight:650;letter-spacing:0}
