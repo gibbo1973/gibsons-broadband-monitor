@@ -143,5 +143,13 @@
   "Alert preferences saved": "Preferencias de avisos guardadas",
   "Test notification sent": "Notificación de prueba enviada",
   "Could not send test notification: {reason}": "No se pudo enviar la notificación de prueba: {reason}",
-  "Could not load statistics: {reason}": "No se pudieron cargar las estadísticas: {reason}"
+  "Could not load statistics: {reason}": "No se pudieron cargar las estadísticas: {reason}",
+  "Connection statistics": "Estadísticas de conexión",
+  "Statistics period": "Periodo de estadísticas",
+  "· LAST 24 HOURS": "· ÚLTIMAS 24 HORAS",
+  "· LAST 7 DAYS": "· ÚLTIMOS 7 DÍAS",
+  "· LAST 90 DAYS": "· ÚLTIMOS 90 DÍAS",
+  "· LAST YEAR": "· ÚLTIMO AÑO",
+  "Oldest test in this period: {date}": "Prueba más antigua de este periodo: {date}",
+  "No successful tests recorded in this period": "No se han registrado pruebas correctas en este periodo"
 }
