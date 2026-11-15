@@ -117,5 +117,11 @@
   "Just now": "Agora mesmo",
   "Download and upload line graph": "Gráfico de transferências e envios",
   "Latency line graph": "Gráfico de latência",
-  "History period": "Período do histórico"
+  "History period": "Período do histórico",
+  "Main navigation": "Navegação principal",
+  "Mobile navigation": "Navegação móvel",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "Os dados são guardados indefinidamente, a menos que elimine a pasta de dados persistentes da aplicação.",
+  "If accessing the app from the public internet, configure": "Se aceder à aplicação a partir da Internet pública, configure",
+  "and HTTPS through a trusted reverse proxy.": "e HTTPS através de um proxy inverso fiável.",
+  "Incorrect password": "Palavra-passe incorreta"
 }
