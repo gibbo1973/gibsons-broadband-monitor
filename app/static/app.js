@@ -199,7 +199,7 @@ async function testAlert(){
   }catch(error){toast(t('Could not send test notification: {reason}',{reason:error.message}))}
   finally{button.disabled=false}
 }
-function init(){
+async function init(){
   await window.GBM_I18N.init();
   makeCanvasChart('speed-chart',[{key:'download',label:t('Download'),unit:'Mbps',color:palette.download},{key:'upload',label:t('Upload'),unit:'Mbps',color:palette.upload}],'speed-empty','speed-tip');
   makeCanvasChart('latency-chart',[{key:'ping',label:t('Ping'),unit:'ms',color:palette.ping}],'latency-empty','latency-tip');
