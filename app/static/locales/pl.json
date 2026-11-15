@@ -143,5 +143,13 @@
   "Alert preferences saved": "Ustawienia alertów zapisane",
   "Test notification sent": "Powiadomienie testowe wysłane",
   "Could not send test notification: {reason}": "Nie udało się wysłać powiadomienia testowego: {reason}",
-  "Could not load statistics: {reason}": "Nie udało się wczytać statystyk: {reason}"
+  "Could not load statistics: {reason}": "Nie udało się wczytać statystyk: {reason}",
+  "Connection statistics": "Statystyki połączenia",
+  "Statistics period": "Okres statystyk",
+  "· LAST 24 HOURS": "· OSTATNIE 24 GODZINY",
+  "· LAST 7 DAYS": "· OSTATNIE 7 DNI",
+  "· LAST 90 DAYS": "· OSTATNIE 90 DNI",
+  "· LAST YEAR": "· OSTATNI ROK",
+  "Oldest test in this period: {date}": "Najstarszy test w tym okresie: {date}",
+  "No successful tests recorded in this period": "Brak zapisanych udanych testów w tym okresie"
 }
