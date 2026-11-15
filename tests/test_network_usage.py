@@ -72,7 +72,27 @@ class NetworkUsageTests(unittest.TestCase):
         self.assertEqual(stats["total_bytes"], 16000)
         self.assertEqual(stats["sample_count"], 2)
         self.assertEqual(stats["coverage_seconds"], 60)
+        self.assertIsNone(stats["average_daily_bytes"])  # Not enough history to extrapolate.
         self.assertEqual(stats["buckets"][-1]["download_bytes"], 7000)
+
+    def test_average_daily_only_after_full_day_coverage(self):
+        self.write_dev(br0=(1000, 2000))
+        with monitor.db() as con:
+            con.execute(
+                "INSERT INTO network_samples(ts,interface,rx_bytes,tx_bytes,rx_delta,tx_delta,elapsed_seconds,boot_id) "
+                "VALUES(?,?,?,?,?,?,?,?)",
+                (self.time(minutes=3), "br0", 1000, 2000, 1000000000, 0, 72000, "boot"),
+            )
+            stats = network.summary(con, "30d", self.path)
+            self.assertIsNone(stats["average_daily_bytes"])  # Only 20 hours observed.
+            con.execute(
+                "INSERT INTO network_samples(ts,interface,rx_bytes,tx_bytes,rx_delta,tx_delta,elapsed_seconds,boot_id) "
+                "VALUES(?,?,?,?,?,?,?,?)",
+                (self.time(minutes=1), "br0", 2000, 3000, 200000000, 0, 14400, "boot"),
+            )
+            stats = network.summary(con, "30d", self.path)
+            self.assertEqual(stats["coverage_seconds"], 86400)
+            self.assertEqual(stats["average_daily_bytes"], 1200000000)
 
     def test_reboot_reset_long_pause_and_interface_switch_do_not_invent_usage(self):
         self.write_dev(br0=(100, 100), eth0=(1000, 1000))
