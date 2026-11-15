@@ -103,7 +103,7 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
       period: '30d',available: true,interfaces: ['br0'],selected_interface: 'auto',interface: 'br0',
       sample_count: 2,first_sample: '2026-11-15T12:00:00+00:00',last_sample: '2026-11-15T12:10:00+00:00',
       download_bytes: 2000000000,upload_bytes: 1000000000,total_bytes: 3000000000,
-      month_total_bytes: 3000000000,average_daily_bytes: 4000000000,
+      month_total_bytes: 3000000000,average_daily_bytes: null,
       monthly_limit_gb: 0, buckets: [{bucket: '2026-11-15',download_bytes: 2000000000,upload_bytes: 1000000000}]
     },
     '/api/results': {results: []},
@@ -159,6 +159,7 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
   assert.equal(getElement('network-total').textContent, '3.00');
   assert.equal(getElement('network-total-unit').textContent, 'GB');
   assert.equal(getElement('network-month').textContent, '3.00');
+  assert.equal(getElement('network-daily').textContent, 'Collecting statistics...');
   networkButtons[4].click();
   await new Promise(resolve => setImmediate(resolve));
   assert.ok(calls.includes('/api/network/usage?period=1y'));
