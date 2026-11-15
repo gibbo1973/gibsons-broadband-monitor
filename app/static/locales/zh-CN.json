@@ -117,5 +117,11 @@
   "Just now": "刚刚",
   "Download and upload line graph": "下载和上传折线图",
   "Latency line graph": "延迟折线图",
-  "History period": "历史时间范围"
+  "History period": "历史时间范围",
+  "Main navigation": "主导航",
+  "Mobile navigation": "移动端导航",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "除非您删除应用的持久化数据目录，否则数据将一直保留。",
+  "If accessing the app from the public internet, configure": "如果需要从公网访问应用，请配置",
+  "and HTTPS through a trusted reverse proxy.": "并通过可信的反向代理启用 HTTPS。",
+  "Incorrect password": "密码错误"
 }
