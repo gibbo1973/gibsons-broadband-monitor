@@ -117,5 +117,11 @@
   "Just now": "たった今",
   "Download and upload line graph": "ダウンロードとアップロードの折れ線グラフ",
   "Latency line graph": "遅延の折れ線グラフ",
-  "History period": "履歴の表示期間"
+  "History period": "履歴の表示期間",
+  "Main navigation": "メインナビゲーション",
+  "Mobile navigation": "モバイルナビゲーション",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "アプリの永続データフォルダーを削除しない限り、データは保存され続けます。",
+  "If accessing the app from the public internet, configure": "公開インターネットからアプリにアクセスする場合は、",
+  "and HTTPS through a trusted reverse proxy.": "と信頼できるリバースプロキシを介したHTTPSを設定してください。",
+  "Incorrect password": "パスワードが正しくありません"
 }
