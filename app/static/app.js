@@ -321,7 +321,14 @@ async function loadNetworkUsage(){
     displayNetworkAmount('network-total',hasSample?data.total_bytes:null);
     // Month-to-date usage should remain visible even if the selected short period is empty.
     displayNetworkAmount('network-month',data.month_total_bytes);
-    displayNetworkAmount('network-daily',hasSample?data.average_daily_bytes:null);
+    if(data.average_daily_bytes==null){
+      $('network-daily').textContent=t('Collecting statistics...');
+      $('network-daily').classList.add('is-pending');
+      $('network-daily-unit').textContent='';
+    }else{
+      $('network-daily').classList.remove('is-pending');
+      displayNetworkAmount('network-daily',data.average_daily_bytes);
+    }
     $('network-first').textContent=data.first_sample?formatDate(data.first_sample,{dateStyle:'medium'}):'—';
     $('network-last').textContent=data.last_sample?ago(data.last_sample):t('Not yet');
     $('network-active-interface').textContent=data.interface
