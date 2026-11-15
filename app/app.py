@@ -25,7 +25,7 @@ from urllib.parse import urlsplit
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
-VERSION = "0.3.0-beta.1"
+VERSION = "0.3.0-beta.2"
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DB_PATH = DATA_DIR / "monitor.sqlite3"
 PORT = int(os.getenv("PORT", "8765"))
