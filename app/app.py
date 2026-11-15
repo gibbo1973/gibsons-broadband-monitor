@@ -141,6 +141,7 @@ def initialize():
             "alert_slow": 0,
             "slow_alert_active": 0,
             "network_interface": "auto",
+            "network_monthly_limit_gb": 0,
         }.items():
             con.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (key, str(value)))
 
@@ -578,7 +579,29 @@ def api_network_usage():
     if period not in network_usage.PERIODS:
         return jsonify({"error": "Unknown usage period"}), 400
     with db() as con:
-        return jsonify(network_usage.summary(con, period))
+        result = network_usage.summary(con, period)
+        result["monthly_limit_gb"] = setting("network_monthly_limit_gb", 0)
+    return jsonify(result)
+
+
+@app.post("/api/network/limit")
+@protected
+def api_network_limit():
+    if request.headers.get("X-Requested-With") != "GibsonsDashboard":
+        return jsonify({"error": "Invalid request"}), 403
+    payload = request.get_json(silent=True) or {}
+    try:
+        number = int(payload.get("limit_gb"))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Monthly limit must be a whole number of GB"}), 400
+    if not 0 <= number <= 100000:
+        return jsonify({"error": "Monthly limit must be 0-100000 GB"}), 400
+    with db() as con:
+        con.execute(
+            "INSERT INTO settings(key,value) VALUES('network_monthly_limit_gb',?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(number),)
+        )
+    return jsonify({"saved": True, "monthly_limit_gb": number})
 
 
 @app.post("/api/network/interface")
