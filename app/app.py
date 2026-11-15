@@ -25,7 +25,9 @@ from urllib.parse import urlsplit
 
 from flask import Flask, Response, jsonify, redirect, render_template, request, session, url_for
 
-VERSION = "0.3.0-beta.3"
+from . import network as network_usage
+
+VERSION = "0.4.0-beta.1"
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DB_PATH = DATA_DIR / "monitor.sqlite3"
 PORT = int(os.getenv("PORT", "8765"))
@@ -117,6 +119,18 @@ def initialize():
                 last_attempt TEXT
             );
             CREATE INDEX IF NOT EXISTS alert_pending_idx ON alert_events(sent,id);
+            CREATE TABLE IF NOT EXISTS network_samples (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                ts TEXT NOT NULL,
+                interface TEXT NOT NULL,
+                rx_bytes INTEGER NOT NULL,
+                tx_bytes INTEGER NOT NULL,
+                rx_delta INTEGER NOT NULL DEFAULT 0,
+                tx_delta INTEGER NOT NULL DEFAULT 0,
+                elapsed_seconds INTEGER NOT NULL DEFAULT 0,
+                boot_id TEXT NOT NULL DEFAULT ''
+            );
+            CREATE INDEX IF NOT EXISTS network_iface_ts_idx ON network_samples(interface,ts);
         """)
         for key, value in {
             "speed_interval": DEFAULT_SPEED_INTERVAL,
@@ -126,6 +140,8 @@ def initialize():
             "alert_restored": 1,
             "alert_slow": 0,
             "slow_alert_active": 0,
+            "network_interface": "auto",
+            "network_monthly_limit_gb": 0,
         }.items():
             con.execute("INSERT OR IGNORE INTO settings(key,value) VALUES(?,?)", (key, str(value)))
 
@@ -556,6 +572,80 @@ def api_statistics():
     return jsonify(speed_statistics(period))
 
 
+@app.get("/api/network/usage")
+@protected
+def api_network_usage():
+    period = request.args.get("period", "30d")
+    if period not in network_usage.PERIODS:
+        return jsonify({"error": "Unknown usage period"}), 400
+    with db() as con:
+        result = network_usage.summary(con, period)
+        result["monthly_limit_gb"] = setting("network_monthly_limit_gb", 0)
+    return jsonify(result)
+
+
+@app.post("/api/network/limit")
+@protected
+def api_network_limit():
+    if request.headers.get("X-Requested-With") != "GibsonsDashboard":
+        return jsonify({"error": "Invalid request"}), 403
+    payload = request.get_json(silent=True) or {}
+    try:
+        number = int(payload.get("limit_gb"))
+    except (ValueError, TypeError):
+        return jsonify({"error": "Monthly limit must be a whole number of GB"}), 400
+    if not 0 <= number <= 100000:
+        return jsonify({"error": "Monthly limit must be 0-100000 GB"}), 400
+    with db() as con:
+        con.execute(
+            "INSERT INTO settings(key,value) VALUES('network_monthly_limit_gb',?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (str(number),)
+        )
+    return jsonify({"saved": True, "monthly_limit_gb": number})
+
+
+@app.post("/api/network/interface")
+@protected
+def api_network_interface():
+    if request.headers.get("X-Requested-With") != "GibsonsDashboard":
+        return jsonify({"error": "Invalid request"}), 403
+    payload = request.get_json(silent=True) or {}
+    name = payload.get("interface")
+    try:
+        available = network_usage.interfaces(network_usage.read_counters())
+    except (OSError, ValueError):
+        return jsonify({"error": "Host network counters are not available. Add the read-only host mount."}), 400
+    if not isinstance(name, str) or (name != "auto" and name not in available):
+        return jsonify({"error": "Choose an available host network interface"}), 400
+    with db() as con:
+        con.execute(
+            "INSERT INTO settings(key,value) VALUES('network_interface',?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value", (name,)
+        )
+    return jsonify({"saved": True, "selected_interface": name})
+
+
+@app.get("/api/network/export.csv")
+@protected
+def api_network_export():
+    period = request.args.get("period", "30d")
+    if period not in network_usage.PERIODS:
+        return jsonify({"error": "Unknown usage period"}), 400
+    with db() as con:
+        stats = network_usage.summary(con, period)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["UTC interval", "Interface", "Downloaded bytes", "Uploaded bytes", "Total bytes"])
+    for row in stats["buckets"]:
+        down = row["download_bytes"]
+        up = row["upload_bytes"]
+        writer.writerow([row["bucket"], stats["interface"], down, up, down + up])
+    return Response(
+        output.getvalue(), mimetype="text/csv",
+        headers={"Content-Disposition": "attachment; filename=gibsons-server-network-usage.csv"},
+    )
+
+
 @app.get("/api/history")
 @protected
 def api_history():
@@ -691,8 +781,26 @@ def scheduler_loop():
     time.sleep(3)
     next_probe = time.monotonic()
     next_speed = time.monotonic() + 12
+    next_network = time.monotonic()
+    missing_network_warned = False
     while not _stop.is_set():
         current = time.monotonic()
+        if current >= next_network:
+            try:
+                with db() as con:
+                    captured = network_usage.capture(con)
+                if captured["recorded"]:
+                    missing_network_warned = False
+                elif not missing_network_warned:
+                    log.warning("No suitable host network interface selected; configure it in Network usage")
+                    missing_network_warned = True
+            except (OSError, ValueError) as exc:
+                if not missing_network_warned:
+                    log.info("Server network usage unavailable: %s (read-only host mount required)", exc)
+                    missing_network_warned = True
+            except Exception:
+                log.exception("Server network sampling failed unexpectedly")
+            next_network = time.monotonic() + 60
         if current >= next_probe:
             try:
                 connection_probe()

@@ -20,6 +20,7 @@
       <button class="nav-item active" data-view="overview"><span class="nav-icon">◫</span>Overview</button>
       <button class="nav-item" data-view="history"><span class="nav-icon">⌁</span>Test history</button>
       <button class="nav-item" data-view="outages"><span class="nav-icon">◷</span>Outages</button>
+      <button class="nav-item" data-view="network"><span class="nav-icon">⇅</span>Network usage</button>
     </nav>
     <div class="nav-label nav-label-tools">TOOLS</div>
     <nav>
@@ -98,6 +99,52 @@
 
       <section class="view" id="view-history"><div class="hero-heading"><div><p class="eyebrow">YOUR RESULTS</p><h1>Test history<span class="heading-spark">.</span></h1><p class="intro">Every recorded result, including failed tests.</p></div><a class="action-btn action-link" href="/api/export.csv">⇩ &nbsp;Export CSV</a></div><article class="chart-card table-card"><div class="table-scroll"><table><thead><tr><th>TESTED</th><th>DOWNLOAD</th><th>UPLOAD</th><th>LATENCY</th><th>SERVER</th><th>RESULT</th></tr></thead><tbody id="results-table"><tr><td colspan="6">Loading results…</td></tr></tbody></table></div><p class="table-caption">Latest 100 results · CSV export includes all results</p></article></section>
 
+      <section class="view" id="view-network">
+        <div class="hero-heading">
+          <div><p class="eyebrow">SERVER NETWORK INTELLIGENCE</p><h1>Network usage<span class="heading-spark">.</span></h1><p class="intro">Actual traffic handled by your Unraid or Linux server.</p></div>
+          <div class="network-interface-control">
+            <label for="network-interface">NETWORK INTERFACE</label>
+            <select id="network-interface" aria-label="Network interface"><option value="auto">Auto (recommended)</option></select>
+          </div>
+        </div>
+        <div id="network-setup" class="network-setup" hidden>
+          <strong>Connect your server network interface</strong>
+          <p>To record host traffic, add a read-only Docker path: host <code>/proc/1/net/dev</code> to container <code>/host/proc/net/dev</code>, then apply the container settings. Your existing data remains intact.</p>
+        </div>
+        <div class="metric-grid network-metrics">
+          <article class="metric-card metric-download"><div class="metric-label"><span class="metric-symbol">↓</span> DATA DOWNLOADED <span class="metric-corner">RECEIVED</span></div><div class="metric-reading"><span id="network-down">—</span><span class="unit" id="network-down-unit">GB</span></div><div class="metric-bottom"><span class="tiny-line cyan-line"></span><span>Selected period</span></div></article>
+          <article class="metric-card metric-upload"><div class="metric-label"><span class="metric-symbol">↑</span> DATA UPLOADED <span class="metric-corner">SENT</span></div><div class="metric-reading"><span id="network-up">—</span><span class="unit" id="network-up-unit">GB</span></div><div class="metric-bottom"><span class="tiny-line mint-line"></span><span>Selected period</span></div></article>
+          <article class="metric-card metric-ping"><div class="metric-label"><span class="metric-symbol">⇅</span> TOTAL TRANSFERRED <span class="metric-corner">RX + TX</span></div><div class="metric-reading"><span id="network-total">—</span><span class="unit" id="network-total-unit">GB</span></div><div class="metric-bottom"><span class="tiny-line violet-line"></span><span id="network-active-interface">Awaiting host interface</span></div></article>
+        </div>
+        <div class="quick-stats network-quick-stats">
+          <div><span class="stat-title">THIS MONTH <span class="muted">· CALENDAR MONTH</span></span><div class="stat-value"><span id="network-month">—</span><span class="stat-unit" id="network-month-unit">GB</span></div></div>
+          <div class="vertical-divider"></div>
+          <div><span class="stat-title">AVERAGE DAILY <span class="muted">· OBSERVED TIME</span></span><div class="stat-value"><span id="network-daily">—</span><span class="stat-unit" id="network-daily-unit">GB</span></div></div>
+          <div class="vertical-divider"></div>
+          <div><span class="stat-title">TRACKING SINCE</span><div class="stat-value stat-time" id="network-first">—</div></div>
+          <div class="vertical-divider"></div>
+          <div><span class="stat-title">LAST SAMPLE</span><div class="stat-value stat-time" id="network-last">—</div></div>
+        </div>
+        <div class="section-heading"><div><h2>Data transfer history</h2><p>Received and sent bytes recorded directly from one host network interface.</p></div></div>
+        <article class="chart-card network-chart-card">
+          <div class="chart-header"><div><span class="eyebrow chart-eyebrow">TRAFFIC OVER TIME</span><h3>Download &amp; upload volume</h3></div>
+            <div class="periods" role="group" aria-label="Network usage period">
+              <button data-network-period="24h" type="button">24H</button><button data-network-period="7d" type="button">7D</button><button data-network-period="30d" type="button" class="selected">30D</button><button data-network-period="90d" type="button">90D</button><button data-network-period="1y" type="button">1Y</button><button data-network-period="all" type="button">ALL</button>
+            </div>
+          </div>
+          <div class="chart-legend"><span><i class="legend-dot cyan"></i>Downloaded</span><span><i class="legend-dot mint"></i>Uploaded</span></div>
+          <div class="chart-wrap network-chart-wrap"><canvas id="network-chart" aria-label="Server network download and upload usage bars"></canvas><div class="chart-empty" id="network-empty">Network samples will appear after the first collection interval.</div><div class="chart-tooltip" id="network-tip"></div></div>
+          <div class="chart-footer"><span id="network-chart-summary">Waiting for network usage samples</span><a class="text-button" id="network-export" href="/api/network/export.csv?period=30d">Export usage CSV ↗</a></div>
+        </article>
+        <article class="chart-card network-limit-card">
+          <div class="chart-header"><div><span class="eyebrow chart-eyebrow">MONTHLY BUDGET</span><h3>Data usage warning</h3></div><span class="secondary-tag">OPTIONAL</span></div>
+          <p class="network-help">Set an optional monthly limit to highlight high server traffic. Enter 0 to disable the warning.</p>
+          <form id="network-limit-form" class="network-limit-form"><label for="network-limit">Monthly warning level (GB)</label><input id="network-limit" type="number" min="0" max="100000" step="1" value="0" required><button class="ghost-btn" type="submit">Save limit</button><span id="network-limit-message"></span></form>
+          <div class="network-budget-track"><div id="network-budget-fill"></div></div><p id="network-budget-status" class="network-budget-status">No monthly warning level set.</p>
+        </article>
+        <p class="network-disclaimer">Server network traffic includes local transfers, containers and internet activity passing through the selected interface. It does not measure the entire household or guarantee ISP billing accuracy. Monitoring starts when this feature is enabled; missing periods are never estimated.</p>
+      </section>
+
       <section class="view" id="view-outages"><div class="hero-heading"><div><p class="eyebrow">AVAILABILITY RECORD</p><h1>Outage history<span class="heading-spark">.</span></h1><p class="intro">Brief disconnections are recorded separately from slow speeds.</p></div></div><article class="chart-card table-card"><div class="table-scroll"><table><thead><tr><th>STARTED</th><th>RESTORED</th><th>DURATION</th><th>STATUS</th></tr></thead><tbody id="outages-table"><tr><td colspan="4">Loading outages…</td></tr></tbody></table></div><p class="table-caption">Two consecutive failed probes are needed to flag a disconnection. Endpoints may occasionally be unreachable even when your ISP is working.</p></article></section>
 
       <section class="view" id="view-settings"><div class="hero-heading"><div><p class="eyebrow">CUSTOMISE YOUR MONITOR</p><h1>Settings<span class="heading-spark">.</span></h1><p class="intro">Choose how frequently your broadband is measured.</p></div></div><article class="chart-card settings-panel"><div class="language-settings"><label for="language-select">Language</label><p>Choose your preferred dashboard language.</p><select id="language-select" aria-label="Language"></select></div><div class="settings-header"><h3>Monitoring frequency</h3><p>Speed tests use real bandwidth. Connectivity checks are much lighter.</p></div><form id="settings-form"><label>Speed test interval <span>Minutes between full download/upload tests (15–1440)</span><input id="speed-interval" type="number" min="15" max="1440" required></label><label>Connectivity check interval <span>Seconds between small availability checks (15–3600)</span><input id="probe-interval" type="number" min="15" max="3600" required></label><label>Slow download warning <span>Threshold in Mbps for highlighting low results</span><input id="slow-threshold" type="number" min="1" max="100000" required></label><div class="settings-actions"><button type="submit" class="action-btn">Save settings</button><span id="settings-message"></span></div></form></article><article class="chart-card settings-panel alert-settings-panel">
@@ -112,7 +159,7 @@
           <p class="alert-help">To enable notifications, add ALERT_NTFY_URL as a Docker environment variable with your private ntfy topic URL. If the broadband goes down, alerts are queued and sent when your internet connection returns.</p>
         </article><div class="security-note"><span>Data is kept indefinitely unless you delete the persistent app data directory.</span> <span>If accessing the app from the public internet, configure</span> <code>DASHBOARD_PASSWORD</code> <span>and HTTPS through a trusted reverse proxy.</span></div></section>
     </main>
-    <nav class="mobile-nav" aria-label="Mobile navigation"><button data-view="overview" class="active">Overview</button><button data-view="history">History</button><button data-view="outages">Outages</button><button data-view="settings">Settings</button></nav>
+    <nav class="mobile-nav" aria-label="Mobile navigation"><button data-view="overview" class="active">Overview</button><button data-view="history">History</button><button data-view="outages">Outages</button><button data-view="network">Usage</button><button data-view="settings">Settings</button></nav>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>

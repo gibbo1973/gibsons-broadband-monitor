@@ -45,3 +45,34 @@ html[dir="rtl"] .metric-reading,html[dir="rtl"] .stat-value {direction:ltr;justi
   .stats-heading .stats-periods{display:flex;width:100%;max-width:100%;overflow-x:auto;justify-content:space-between}
   .stats-heading .stats-periods button{min-width:42px;flex:1;padding:9px 6px}
 }
+
+/* Server Network Usage — a first-class page in the original dashboard style. */
+.network-interface-control{display:grid;gap:8px;min-width:205px;max-width:100%}
+.network-interface-control label{font-size:9px;letter-spacing:1.3px;color:#89a5bd;font-weight:800}
+.network-interface-control select{width:100%;padding:11px 13px;border:1px solid #32516c;background:#102239;color:#e8f4ff;border-radius:9px;outline:none;font:inherit;font-size:12px;font-weight:650;cursor:pointer}
+.network-interface-control select:focus-visible{border-color:var(--cyan);outline:2px solid #35d4fa55;outline-offset:2px}
+.network-setup{padding:19px 22px;margin:0 0 21px;border:1px solid #695334;background:#241f1c;border-radius:12px}
+.network-setup[hidden]{display:none}
+.network-setup strong{display:block;color:#f4d4a1;font-size:13px;margin-bottom:6px}
+.network-setup p{color:#c2b39f;font-size:11px;line-height:1.7;margin:0}
+.network-setup code{color:#f3e7d6}
+.network-metrics .metric-reading{margin:24px 0 22px}
+.network-metrics .metric-reading>span:first-child{font-size:clamp(30px,3.25vw,51px);letter-spacing:-1.8px}
+.network-metrics .metric-ping .metric-symbol{font-size:18px}
+.network-quick-stats{margin-bottom:38px}
+.network-chart-wrap{height:312px}
+.network-chart-wrap canvas{cursor:crosshair}
+.network-chart-card .chart-tooltip{max-width:225px;line-height:1.8}
+.network-limit-card{margin-top:18px}
+.network-help,.network-disclaimer{font-size:12px;line-height:1.7;color:#8da3bc;margin:15px 0}
+.network-disclaimer{margin-top:21px}
+.network-limit-form{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin:18px 0}
+.network-limit-form label{font-size:11px;color:#a7c0d6;font-weight:700}
+.network-limit-form input{width:135px;padding:10px 11px;background:#091727;border:1px solid #36516b;border-radius:8px;color:white;font:inherit;font-size:12px}
+.network-limit-form span{font-size:11px;color:var(--mint)}
+.network-budget-track{height:9px;border-radius:30px;overflow:hidden;background:#081628;border:1px solid #223a51;margin:21px 0 11px}
+.network-budget-track>div{height:100%;width:0;background:linear-gradient(90deg,#0a8ac1,var(--cyan));border-radius:30px;transition:width .25s}
+.network-budget-track>div.over-limit{background:var(--danger)}
+.network-budget-status{font-size:11px;color:#8faabe;margin:0}
+@media(max-width:1100px){.network-quick-stats{flex-wrap:wrap;gap:18px}.network-quick-stats .vertical-divider{display:none}.network-quick-stats>div:not(.vertical-divider){flex:1 1 42%}}
+@media(max-width:600px){.network-interface-control{width:100%}.network-quick-stats{display:grid;grid-template-columns:1fr 1fr}.network-quick-stats>div:not(.vertical-divider){min-width:0}.network-chart-wrap{height:240px}.network-limit-form{align-items:stretch}.network-limit-form button{align-self:center}.mobile-nav button{padding:9px 5px;font-size:10px}}

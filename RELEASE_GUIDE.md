@@ -1,42 +1,37 @@
-# First public beta: Gibson's Broadband Monitor
+# Gibson's Broadband Monitor — release and Unraid upgrade guide
 
-This is a **ready-to-publish source release**, not an already published image.
+This repository publishes Docker images automatically to `ghcr.io/gibbo1973/gibsons-broadband-monitor:latest` when changes are merged into `main`. GitHub Actions publishes both `linux/amd64` and `linux/arm64` and runs backend/browser tests before pushing the image.
 
-## The simplest path on a Mac
+## Before saying a release is ready
 
-1. Download and unzip the project.
-2. Install GitHub CLI if needed: `brew install gh` (requires Homebrew).
-3. Sign into your GitHub account: `gh auth login`.
-4. Make sure Git is configured to identify your commits:
-   `git config --global user.name "Glen Gibson"` and
-   `git config --global user.email "YOUR_GITHUB_EMAIL"` (use your actual email).
-5. From inside the unzipped folder run: `./scripts/publish-with-gh.sh`.
-6. In GitHub, open the repository **Actions** tab and verify the **Docker image** build succeeded.
-7. Find the new **gibsons-broadband-monitor** package under your GitHub profile/packages and set package visibility to **Public**.
+1. Check **Tests** on the pull request: all checks must pass.
+2. Merge the reviewed PR into `main`.
+3. Open the **Docker image** workflow in [GitHub Actions](https://github.com/gibbo1973/gibsons-broadband-monitor/actions/workflows/docker-publish.yml). Verify that the newest run is **successful** and built the merged commit. A green test run alone does **not** mean the image has published.
+4. Update the container in Unraid through **Docker → Check for Updates**.
+5. Confirm the displayed version, that navigation works, that speed history persists, and that the new feature shows valid data.
 
-The GitHub Actions workflow publishes images for `linux/amd64` and `linux/arm64` with a tag such as:
-`ghcr.io/gibbo1973/gibsons-broadband-monitor:v0.1.0-beta.1`.
+## Existing Unraid container: add server network usage
 
-## Test on Unraid once the image has built
+Version `0.4.0-beta.1` adds **Server Network Usage** with counters, selectable time periods, chart, CSV export and a dashboard monthly warning threshold. Existing installs need **one additional read-only path mapping**, as Unraid does not automatically incorporate new template fields when updating a running container.
 
-In Unraid's **Docker → Add Container** form:
+| Unraid setting | Value |
+| --- | --- |
+| Network type | `bridge` (unchanged) |
+| Image | `ghcr.io/gibbo1973/gibsons-broadband-monitor:latest` |
+| Host path | `/proc/1/net/dev` |
+| Container path | `/host/proc/net/dev` |
+| Access mode | **Read Only** |
+| Existing appdata | `/mnt/user/appdata/gibsons-broadband-monitor` → `/data` (preserve) |
 
-- Name: `gibsons-broadband-monitor`
-- Repository: `ghcr.io/gibbo1973/gibsons-broadband-monitor:v0.1.0-beta.1`
-- Network: `bridge`
-- Port: host `8765` → container `8765`
-- Path: host `/mnt/user/appdata/gibsons-broadband-monitor` → container `/data` (read/write)
-- Environment: `TZ=Europe/London`
-- Extra parameters: `--security-opt=no-new-privileges --cap-drop=ALL --cap-add=CHOWN --cap-add=SETUID --cap-add=SETGID`
+Use **Docker → your container → Edit → Add another Path** in Unraid, add the path mapping and Apply. The app does not require `host` network mode, the Docker socket, privileged mode or extra kernel capabilities.
 
-The app will be available at `http://192.168.1.191:8765` on the user's existing LAN configuration. Do not expose it directly to the public internet without a password and secure HTTPS proxy.
+The first counter read establishes a baseline. Downloads/uploads appear as differences between subsequent reads. Long pauses, reboots and resets create new baselines, so missing traffic is never estimated.
 
-A full Unraid XML template is included at `unraid/gibsons-broadband-monitor.xml`.
+**Important distinction:** these counters represent **one server network interface**, including local network file transfers, not broadband traffic for an entire household. `br0` is often the appropriate interface on Unraid, but select the interface matching the host's actual connection.
 
-## Public listing
+## Other notes
 
-Before submitting to Unraid Community Applications, validate the real image on Unraid: it must start without errors, write to the `/data` mount, survive a restart, produce valid speed readings, and show outages accurately. Then change the image tag in the XML to a stable release if needed and submit the repository using https://ca.unraid.net/submit/new.
-
-## Limitations of this package
-
-Local static code, JavaScript, Python syntax, YAML and XML have been checked. A full Docker image build, live speedtest, GitHub Actions run and Unraid installation have not yet been completed or verified. No repository/package has been created by the packaging process itself.
+- Changes to the Unraid Community Applications **screenshots, overview or description** are made in `unraid/gibsons-broadband-monitor.xml`. These do not require a new Docker image by themselves.
+- Community Apps catalogue review/blacklist status is managed by Unraid, separately from GitHub Docker builds.
+- Existing measurements are retained in `/data/monitor.sqlite3`; never delete the appdata mapping or its directory to perform an upgrade.
+- Do not expose this dashboard directly to the public internet without `DASHBOARD_PASSWORD` and a secure HTTPS reverse proxy.

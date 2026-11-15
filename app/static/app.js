@@ -4,7 +4,7 @@
 const $ = (id) => document.getElementById(id);
 const t = (message, args) => window.GBM_I18N.t(message, args);
 const locale = () => window.GBM_I18N.locale;
-const state = {period:'7d', statsPeriod:'30d', history:[], status:null, view:'overview', charts:{}};
+const state = {period:'7d', statsPeriod:'30d', networkPeriod:'30d', history:[], status:null, view:'overview', charts:{}, networkData:[], networkHits:[], networkSelectorSignature:''};
 const palette = {download:'#35d4fa', upload:'#50edac', ping:'#c29cff'};
 const number = (n, digits=1) => n == null || !Number.isFinite(Number(n)) ? '—' : Number(n).toFixed(digits);
 const formatDate = (value, options={dateStyle:'medium',timeStyle:'short'}) => {
@@ -23,7 +23,7 @@ const ago = value => {
 };
 async function jsonFetch(url, opts){const r=await fetch(url,{cache:'no-store',credentials:'same-origin',...opts});if(r.status===401){location.assign('/login');throw Error(t('Sign in required'))}let data=await r.json();if(!r.ok)throw Error(data.error||t('Request failed'));return data}
 function toast(message){const e=$('toast');e.textContent=message;e.classList.add('show');clearTimeout(toast.timer);toast.timer=setTimeout(()=>e.classList.remove('show'),4200)}
-function setView(view){state.view=view;document.querySelectorAll('.view').forEach(x=>x.classList.toggle('visible',x.id==='view-'+view));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));$('page-name').textContent=t(({overview:'Overview',history:'History',outages:'Outages',settings:'Settings'})[view]||view);window.scrollTo({top:0,behavior:'instant'});if(view==='overview')requestAnimationFrame(drawAll);if(view==='history')loadResults();if(view==='outages')loadOutages()}
+function setView(view){state.view=view;document.querySelectorAll('.view').forEach(x=>x.classList.toggle('visible',x.id==='view-'+view));document.querySelectorAll('[data-view]').forEach(x=>x.classList.toggle('active',x.dataset.view===view));$('page-name').textContent=t(({overview:'Overview',history:'History',outages:'Outages',network:'Network usage',settings:'Settings'})[view]||view);window.scrollTo({top:0,behavior:'instant'});if(view==='overview')requestAnimationFrame(drawAll);if(view==='history')loadResults();if(view==='outages')loadOutages();if(view==='network'){loadNetworkUsage();requestAnimationFrame(drawNetworkChart)}}
 function showStatus(data){state.status=data;const latest=data.latest,probe=data.last_probe;
   $('down-value').textContent=number(latest?.download);$('up-value').textContent=number(latest?.upload);
   $('ping-value').textContent=number(latest?.ping,0);$('ping-note').textContent=latest?.jitter!=null?t('Jitter')+' '+number(latest.jitter)+' ms':t('Most recent test');
@@ -217,6 +217,160 @@ async function testAlert(){
   }catch(error){toast(t('Could not send test notification: {reason}',{reason:error.message}))}
   finally{button.disabled=false}
 }
+
+// Server network activity uses the same navy cards and cyan/mint palette as
+// the speed charts. Units are decimal, as typically used for ISP data quotas.
+function networkAmount(bytes){
+  if(bytes==null || !Number.isFinite(Number(bytes)) || Number(bytes)<0)return {value:'—',unit:'GB'};
+  let amount=Number(bytes);const units=['B','KB','MB','GB','TB','PB'];
+  let i=0;while(amount>=1000 && i<units.length-1){amount/=1000;i++}
+  const digits=i===0?0:amount>=100?0:amount>=10?1:2;
+  return {value:amount.toLocaleString(locale(),{minimumFractionDigits:digits,maximumFractionDigits:digits}),unit:units[i]};
+}
+function displayNetworkAmount(id,bytes){
+  const result=networkAmount(bytes);
+  $(id).textContent=result.value;
+  $(id+'-unit').textContent=result.unit;
+}
+function networkBucketDate(bucket){
+  const iso=bucket.length===13?bucket+':00:00Z':bucket.length===10?bucket+'T00:00:00Z':bucket+'-01T00:00:00Z';
+  const d=new Date(iso);
+  if(Number.isNaN(+d))return bucket;
+  if(bucket.length===13)return d.toLocaleString(locale(),{day:'numeric',hour:'2-digit'});
+  if(bucket.length===7)return d.toLocaleString(locale(),{month:'short',year:'2-digit'});
+  return d.toLocaleString(locale(),{day:'numeric',month:'short'});
+}
+function drawNetworkChart(){
+  const canvas=$('network-chart'), width=canvas.getBoundingClientRect().width;
+  if(width<30)return;
+  const height=canvas.getBoundingClientRect().height;
+  const dpr=Math.max(1,Math.min(2,window.devicePixelRatio||1));
+  canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);
+  const ctx=canvas.getContext('2d');
+  if(!ctx)return;
+  ctx.scale(dpr,dpr);ctx.clearRect(0,0,width,height);
+  const rows=state.networkData;
+  $('network-empty').classList.toggle('hidden',rows.length>0);
+  state.networkHits=[];
+  if(!rows.length)return;
+  const box={left:49,right:width-12,top:15,bottom:height-35};
+  const max=Math.max(1,...rows.map(x=>Number(x.download_bytes||0)+Number(x.upload_bytes||0)));
+  const top=max*1.16;const w=box.right-box.left,h=box.bottom-box.top;
+  ctx.save();ctx.font='10px system-ui,sans-serif';ctx.lineWidth=1;
+  ctx.textAlign='right';ctx.fillStyle='#7895b3';ctx.strokeStyle='#243c54';
+  for(let i=0;i<=4;i++){
+    const y=box.top+h*i/4;
+    ctx.setLineDash([2,6]);ctx.beginPath();ctx.moveTo(box.left,y);ctx.lineTo(box.right,y);ctx.stroke();ctx.setLineDash([]);
+    const ordinate=networkAmount(top*(1-i/4));
+    ctx.fillText(ordinate.value+' '+ordinate.unit,box.left-7,y+3);
+  }
+  const step=w/rows.length,barWidth=Math.max(1,Math.min(24,step*.6));
+  const labelEvery=Math.max(1,Math.ceil(rows.length/5));
+  rows.forEach((data,i)=>{
+    const center=box.left+step*(i+.5);
+    const down=Number(data.download_bytes||0),up=Number(data.upload_bytes||0);
+    const hDown=h*down/top,hUp=h*up/top;
+    if(down>0){ctx.fillStyle=palette.download;ctx.fillRect(center-barWidth/2,box.bottom-hDown,barWidth,hDown)}
+    if(up>0){ctx.fillStyle=palette.upload;ctx.fillRect(center-barWidth/2,box.bottom-hDown-hUp,barWidth,hUp)}
+    state.networkHits.push({x:center,bucket:data.bucket,down,up});
+    if(i%labelEvery===0 || i===rows.length-1){
+      ctx.fillStyle='#7895b3';ctx.textAlign='center';
+      ctx.fillText(networkBucketDate(data.bucket),Math.max(box.left+23,Math.min(box.right-23,center)),height-10);
+    }
+  });
+  ctx.restore();
+}
+function moveNetworkTooltip(event){
+  const canvas=$('network-chart'),tip=$('network-tip'),hits=state.networkHits;
+  if(!hits.length){tip.classList.remove('visible');return}
+  const rect=canvas.getBoundingClientRect();
+  const x=event.clientX-rect.left;
+  let nearest=hits[0];
+  for(const hit of hits)if(Math.abs(hit.x-x)<Math.abs(nearest.x-x))nearest=hit;
+  if(Math.abs(nearest.x-x)>Math.max(20,rect.width/hits.length)){
+    tip.classList.remove('visible');return;
+  }
+  const down=networkAmount(nearest.down),up=networkAmount(nearest.up);
+  tip.textContent=networkBucketDate(nearest.bucket)+' · '+t('Downloaded')+': '+down.value+' '+down.unit+' · '+t('Uploaded')+': '+up.value+' '+up.unit;
+  tip.style.left=Math.max(5,Math.min(rect.width-205,nearest.x+10))+'px';
+  tip.style.top='20px';tip.classList.add('visible');
+}
+async function loadNetworkUsage(){
+  const selected=state.networkPeriod;
+  try{
+    const data=await jsonFetch('/api/network/usage?period='+encodeURIComponent(selected));
+    if(selected!==state.networkPeriod)return;
+    const selector=$('network-interface');
+    const signature=data.interfaces.join('|')+'|'+data.selected_interface;
+    if(signature!==state.networkSelectorSignature){
+      const options=[['auto',t('Auto (recommended)')],...data.interfaces.map(name=>[name,name])];
+      selector.replaceChildren();
+      for(const [value,label] of options){
+        const option=document.createElement('option');option.value=value;option.textContent=label;selector.append(option);
+      }
+      if(data.selected_interface!=='auto' && !data.interfaces.includes(data.selected_interface)){
+        const option=document.createElement('option');option.value=data.selected_interface;option.textContent=data.selected_interface+' ('+t('Unavailable')+')';selector.append(option);
+      }
+      selector.value=data.selected_interface;
+      state.networkSelectorSignature=signature;
+    }
+    $('network-setup').hidden=Boolean(data.available);
+    const hasSample=data.sample_count>0;
+    displayNetworkAmount('network-down',hasSample?data.download_bytes:null);
+    displayNetworkAmount('network-up',hasSample?data.upload_bytes:null);
+    displayNetworkAmount('network-total',hasSample?data.total_bytes:null);
+    // Month-to-date usage should remain visible even if the selected short period is empty.
+    displayNetworkAmount('network-month',data.month_total_bytes);
+    displayNetworkAmount('network-daily',hasSample?data.average_daily_bytes:null);
+    $('network-first').textContent=data.first_sample?formatDate(data.first_sample,{dateStyle:'medium'}):'—';
+    $('network-last').textContent=data.last_sample?ago(data.last_sample):t('Not yet');
+    $('network-active-interface').textContent=data.interface
+      ?(data.interfaces.includes(data.interface)
+        ?t('Monitoring {interface}',{interface:data.interface})
+        :t('Unavailable')+' · '+data.interface)
+      :t('Awaiting host interface');
+    state.networkData=data.buckets||[];
+    $('network-empty').textContent=data.available
+      ?t('Network samples will appear after the first collection interval.')
+      :t('Add the host network mount to start monitoring.');
+    $('network-chart-summary').textContent=hasSample
+      ?t('{count} network samples in selected period',{count:Number(data.sample_count).toLocaleString(locale())})
+      :t('No traffic samples recorded in this period');
+    $('network-export').href='/api/network/export.csv?period='+encodeURIComponent(selected);
+    if(document.activeElement!==$('network-limit'))$('network-limit').value=data.monthly_limit_gb||0;
+    const limit=Number(data.monthly_limit_gb)||0;
+    const proportion=limit>0?data.month_total_bytes/(limit*1000000000):0;
+    $('network-budget-fill').style.width=Math.min(100,Math.max(0,proportion*100)).toFixed(1)+'%';
+    $('network-budget-fill').classList.toggle('over-limit',proportion>=1);
+    $('network-budget-status').textContent=limit===0
+      ?t('No monthly warning level set.')
+      :proportion>=1
+      ?t('Monthly limit reached: {used} of {limit} GB',{used:networkAmount(data.month_total_bytes).value+' '+networkAmount(data.month_total_bytes).unit,limit})
+      :t('{percent}% of your {limit} GB monthly warning level',{percent:(proportion*100).toFixed(1),limit});
+    drawNetworkChart();
+  }catch(error){toast(t('Could not load network usage: {reason}',{reason:error.message}))}
+}
+async function saveNetworkInterface(){
+  const selector=$('network-interface');
+  try{
+    await jsonFetch('/api/network/interface',{method:'POST',headers:{
+      'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'
+    },body:JSON.stringify({interface:selector.value})});
+    state.networkSelectorSignature='';
+    await loadNetworkUsage();
+    toast(t('Network interface saved'));
+  }catch(error){toast(t('Could not save network interface: {reason}',{reason:error.message}))}
+}
+async function saveNetworkLimit(event){
+  event.preventDefault();
+  try{
+    await jsonFetch('/api/network/limit',{method:'POST',headers:{
+      'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'
+    },body:JSON.stringify({limit_gb:Number($('network-limit').value)})});
+    $('network-limit-message').textContent=t('Saved');
+    await loadNetworkUsage();
+  }catch(error){$('network-limit-message').textContent=error.message}
+}
 async function init(){
   await window.GBM_I18N.init();
   makeCanvasChart('speed-chart',[{key:'download',label:t('Download'),unit:'Mbps',color:palette.download},{key:'upload',label:t('Upload'),unit:'Mbps',color:palette.upload}],'speed-empty','speed-tip');
@@ -235,12 +389,20 @@ async function init(){
   $('run-btn').addEventListener('click',runNow);$('settings-form').addEventListener('submit',saveSettings);
   $('alert-settings-form').addEventListener('submit',saveAlerts);
   $('test-alert-btn').addEventListener('click',testAlert);
-  if(typeof ResizeObserver!=='undefined'){const obs=new ResizeObserver(()=>drawAll());obs.observe($('speed-chart').parentElement);obs.observe($('latency-chart').parentElement)}
-  else window.addEventListener('resize',drawAll);
+  $('network-interface').addEventListener('change',saveNetworkInterface);
+  $('network-limit-form').addEventListener('submit',saveNetworkLimit);
+  $('network-chart').addEventListener('pointermove',moveNetworkTooltip);
+  $('network-chart').addEventListener('pointerleave',()=>$('network-tip').classList.remove('visible'));
+  document.querySelectorAll('[data-network-period]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-network-period]').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');state.networkPeriod=b.dataset.networkPeriod;loadNetworkUsage();
+  }));
+  if(typeof ResizeObserver!=='undefined'){const obs=new ResizeObserver(()=>drawAll());obs.observe($('speed-chart').parentElement);obs.observe($('latency-chart').parentElement);obs.observe($('network-chart').parentElement)}
+  else window.addEventListener('resize',()=>{drawAll();drawNetworkChart()});
   function updateClock(){$('clock').textContent=new Date().toLocaleTimeString(locale(),{hour:'2-digit',minute:'2-digit'})}
   updateClock();setInterval(updateClock,30000);
   loadStatus();loadHistory();loadStatistics();
-  setInterval(()=>{if(document.visibilityState==='visible'){loadStatus();if(state.view==='overview'){loadHistory();loadStatistics()}}},30000);
+  setInterval(()=>{if(document.visibilityState==='visible'){loadStatus();if(state.view==='overview'){loadHistory();loadStatistics()}if(state.view==='network')loadNetworkUsage()}},30000);
 }
 document.addEventListener('DOMContentLoaded',init);
 })();
