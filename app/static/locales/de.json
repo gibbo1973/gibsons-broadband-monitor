@@ -143,5 +143,13 @@
   "Alert preferences saved": "Warneinstellungen gespeichert",
   "Test notification sent": "Testbenachrichtigung gesendet",
   "Could not send test notification: {reason}": "Testbenachrichtigung konnte nicht gesendet werden: {reason}",
-  "Could not load statistics: {reason}": "Statistiken konnten nicht geladen werden: {reason}"
+  "Could not load statistics: {reason}": "Statistiken konnten nicht geladen werden: {reason}",
+  "Connection statistics": "Verbindungsstatistiken",
+  "Statistics period": "Statistikzeitraum",
+  "· LAST 24 HOURS": "· LETZTE 24 STUNDEN",
+  "· LAST 7 DAYS": "· LETZTE 7 TAGE",
+  "· LAST 90 DAYS": "· LETZTE 90 TAGE",
+  "· LAST YEAR": "· LETZTES JAHR",
+  "Oldest test in this period: {date}": "Ältester Test in diesem Zeitraum: {date}",
+  "No successful tests recorded in this period": "Keine erfolgreichen Tests in diesem Zeitraum erfasst"
 }
