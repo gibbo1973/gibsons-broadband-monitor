@@ -185,7 +185,7 @@ def summary(con, period: str = "30d", path: Path | str = HOST_COUNTERS_FILE) -> 
         "upload_bytes": uploaded,
         "total_bytes": downloaded + uploaded,
         "average_daily_bytes": round((downloaded + uploaded) * 86400 / row["seconds"])
-        if row["seconds"] else None,
+        if row["seconds"] >= 86400 else None,
     })
     group_len = 13 if period == "24h" else (7 if period in ("1y", "all") else 10)
     daily = con.execute(
