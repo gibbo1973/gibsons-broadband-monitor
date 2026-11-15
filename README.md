@@ -23,7 +23,7 @@
 - Recent test and outage tables; export all speed-test results as CSV
 - Adjustable test interval and low-speed warning threshold from the UI
 - Optional password for dashboard access; no external account or analytics service
-- Separate icon.svg/icon.png for small icons and original chosen brand graphic in `brand.png`
+- Square-cropped app icon derived from the original brand graphic (original proportions preserved; no stretching)
 
 **Requirements:** Docker (or Unraid with Docker), internet connectivity, and storage for the SQLite database. Builds for amd64 and arm64 with the supplied Dockerfile.
 
