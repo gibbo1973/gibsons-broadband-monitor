@@ -319,12 +319,15 @@ async function loadNetworkUsage(){
     displayNetworkAmount('network-down',hasSample?data.download_bytes:null);
     displayNetworkAmount('network-up',hasSample?data.upload_bytes:null);
     displayNetworkAmount('network-total',hasSample?data.total_bytes:null);
-    displayNetworkAmount('network-month',hasSample?data.month_total_bytes:null);
+    // Month-to-date usage should remain visible even if the selected short period is empty.
+    displayNetworkAmount('network-month',data.month_total_bytes);
     displayNetworkAmount('network-daily',hasSample?data.average_daily_bytes:null);
     $('network-first').textContent=data.first_sample?formatDate(data.first_sample,{dateStyle:'medium'}):'—';
     $('network-last').textContent=data.last_sample?ago(data.last_sample):t('Not yet');
     $('network-active-interface').textContent=data.interface
-      ?t('Monitoring {interface}',{interface:data.interface})
+      ?(data.interfaces.includes(data.interface)
+        ?t('Monitoring {interface}',{interface:data.interface})
+        :t('Unavailable')+' · '+data.interface)
       :t('Awaiting host interface');
     state.networkData=data.buckets||[];
     $('network-empty').textContent=data.available
