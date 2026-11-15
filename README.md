@@ -19,6 +19,8 @@
 - Lightweight dual-endpoint HTTPS availability tests every 30 seconds
 - Outage start/end detection with two consecutive failures required to begin an event
 - 30-day uptime and outage totals (based on probe samples)
+- **30-day statistics:** actual average, minimum and maximum download, upload, ping and jitter across successful measurements
+- Optional **ntfy phone alerts** for connection outages, restorations and slow download speeds; queued while offline and sent on reconnection
 - SQLite storage in `/data`, with no automatic deletion
 - Recent test and outage tables; export all speed-test results as CSV
 - Adjustable test interval and low-speed warning threshold from the UI
@@ -59,6 +61,28 @@ Open `http://YOUR-UNRAID-IP:8765`. The first speed test runs soon after startup.
 For any public or remote access, set `DASHBOARD_PASSWORD` and a long random `SECRET_KEY`, and use HTTPS through a secure reverse proxy. Keep the dashboard on a trusted private network by default.
 
 Update the image through Unraid Docker's **Check for Updates**. The `/data` mapping preserves measurements across container updates. Do not delete the appdata directory unless you intend to delete recorded results.
+
+## Alerts and notifications (optional)
+
+Version **0.3.0-beta.1** adds optional phone notifications through [ntfy](https://ntfy.sh/), an open-source push notification service. Notifications are **disabled until you configure an ntfy topic URL**.
+
+1. Install the **ntfy** mobile app, or use a trusted self-hosted ntfy server.
+2. Create a long, difficult-to-guess topic name or use an authenticated self-hosted topic. Public ntfy topics are not private merely because their names are obscure.
+3. In Unraid, go to **Docker → Gibson's Broadband Monitor → Edit**, switch to advanced view if necessary, and add an **environment variable**:
+   - Name: `ALERT_NTFY_URL`
+   - Value: `https://ntfy.sh/YOUR-LONG-UNIQUE-TOPIC` (or your self-hosted ntfy topic URL)
+4. Apply the container change, open the dashboard, and visit **Settings → Notifications**.
+5. Choose outage, restoration and/or slow-speed alerts, save settings, and use **Send test notification**. Subscribe to that same topic in the ntfy mobile app.
+
+The URL is read only from the container's environment and is **not returned by the dashboard API**. Use HTTPS for notification transport. The app does not store any credentials in the monitoring database.
+
+**Important:** A broadband outage also prevents the server from reaching internet notification services. The app **queues outage notifications locally** and delivers them **after two successful connectivity checks** once service returns. Do not rely on these delayed notifications for safety-critical or time-sensitive outage detection. Notifications are retried after failed delivery; queue records remain in the local SQLite database.
+
+Slow-speed alerts trigger once when a successful speed test falls below the threshold configured in Settings, and re-arm after a normal-speed result. They are disabled by default; outage and recovery alerts are enabled by default once a topic URL is configured.
+
+## Statistics
+
+The dashboard includes a **30-day speed summary** using only successful tests. It shows arithmetic averages and recorded minima/maxima for download, upload, ping and jitter; missing readings appear as dashes. These are actual measured values, not estimated speeds. The existing uptime percentage is based on HTTP availability probes and **must not be interpreted as ICMP packet loss**.
 
 ## Screenshots
 
