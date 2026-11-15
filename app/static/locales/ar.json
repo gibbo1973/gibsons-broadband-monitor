@@ -117,5 +117,11 @@
   "Just now": "الآن",
   "Download and upload line graph": "مخطط خطي للتنزيل والرفع",
   "Latency line graph": "مخطط خطي لزمن الاستجابة",
-  "History period": "فترة السجل"
+  "History period": "فترة السجل",
+  "Main navigation": "التنقل الرئيسي",
+  "Mobile navigation": "التنقل عبر الهاتف",
+  "Data is kept indefinitely unless you delete the persistent app data directory.": "تُحتفظ بالبيانات دون حد زمني ما لم تحذف مجلد البيانات الدائمة للتطبيق.",
+  "If accessing the app from the public internet, configure": "إذا كنت تصل إلى التطبيق من الإنترنت العام، فقم بإعداد",
+  "and HTTPS through a trusted reverse proxy.": "وHTTPS من خلال وكيل عكسي موثوق.",
+  "Incorrect password": "كلمة المرور غير صحيحة"
 }
