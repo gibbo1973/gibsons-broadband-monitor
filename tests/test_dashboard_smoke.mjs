@@ -69,7 +69,7 @@ test('dashboard loads, fetches live data and registers navigation clicks', async
       locale: 'en',
       async init() {},
       t(message, values = {}) {
-        return message.replace(/\\{([a-z]+)\\}/gi, (match, key) => String(values[key] ?? match));
+        return message.replace(/\{([a-z]+)\}/gi, (match, key) => String(values[key] ?? match));
       }
     },
     scrollTo() {},
