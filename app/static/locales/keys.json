@@ -117,5 +117,11 @@
   "Just now",
   "Download and upload line graph",
   "Latency line graph",
-  "History period"
+  "History period",
+  "Main navigation",
+  "Mobile navigation",
+  "Data is kept indefinitely unless you delete the persistent app data directory.",
+  "If accessing the app from the public internet, configure",
+  "and HTTPS through a trusted reverse proxy.",
+  "Incorrect password"
 ]
