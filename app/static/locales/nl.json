@@ -143,5 +143,13 @@
   "Alert preferences saved": "Meldingsvoorkeuren opgeslagen",
   "Test notification sent": "Testmelding verzonden",
   "Could not send test notification: {reason}": "Testmelding verzenden mislukt: {reason}",
-  "Could not load statistics: {reason}": "Statistieken laden mislukt: {reason}"
+  "Could not load statistics: {reason}": "Statistieken laden mislukt: {reason}",
+  "Connection statistics": "Verbindingsstatistieken",
+  "Statistics period": "Statistiekperiode",
+  "· LAST 24 HOURS": "· LAATSTE 24 UUR",
+  "· LAST 7 DAYS": "· LAATSTE 7 DAGEN",
+  "· LAST 90 DAYS": "· LAATSTE 90 DAGEN",
+  "· LAST YEAR": "· AFGELOPEN JAAR",
+  "Oldest test in this period: {date}": "Oudste test in deze periode: {date}",
+  "No successful tests recorded in this period": "Geen geslaagde tests geregistreerd in deze periode"
 }

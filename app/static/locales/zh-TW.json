@@ -143,5 +143,13 @@
   "Alert preferences saved": "通知偏好已儲存",
   "Test notification sent": "測試通知已傳送",
   "Could not send test notification: {reason}": "無法傳送測試通知：{reason}",
-  "Could not load statistics: {reason}": "無法載入統計資料：{reason}"
+  "Could not load statistics: {reason}": "無法載入統計資料：{reason}",
+  "Connection statistics": "連線統計",
+  "Statistics period": "統計時間範圍",
+  "· LAST 24 HOURS": "· 最近24小時",
+  "· LAST 7 DAYS": "· 最近7天",
+  "· LAST 90 DAYS": "· 最近90天",
+  "· LAST YEAR": "· 最近1年",
+  "Oldest test in this period: {date}": "此期間最早的測試：{date}",
+  "No successful tests recorded in this period": "此期間沒有成功的測試紀錄"
 }

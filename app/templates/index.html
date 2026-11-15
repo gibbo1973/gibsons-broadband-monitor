@@ -53,16 +53,26 @@
         </div>
 
         <div class="quick-stats">
-          <div><span class="stat-title">CONNECTION UPTIME <span class="muted">· LAST 30 DAYS</span></span><div class="stat-value"><span id="uptime">—</span><span class="stat-unit">%</span></div></div>
+          <div><span class="stat-title">CONNECTION UPTIME <span class="muted" id="uptime-period-label">· LAST 30 DAYS</span></span><div class="stat-value"><span id="uptime">—</span><span class="stat-unit">%</span></div></div>
           <div class="vertical-divider"></div>
-          <div><span class="stat-title">RECORDED OUTAGES <span class="muted">· LAST 30 DAYS</span></span><div class="stat-value" id="outages-count">—</div></div>
+          <div><span class="stat-title">RECORDED OUTAGES <span class="muted" id="outages-period-label">· LAST 30 DAYS</span></span><div class="stat-value" id="outages-count">—</div></div>
           <div class="vertical-divider"></div>
           <div><span class="stat-title">SPEED TESTS LOGGED <span class="muted">· ALL TIME</span></span><div class="stat-value" id="tests-count">—</div></div>
           <div class="vertical-divider"></div>
           <div><span class="stat-title">LAST MEASUREMENT</span><div class="stat-value stat-time" id="last-test">Not yet</div></div>
         </div>
 
-        <div class="section-heading summary-heading"><div><h2>30-day speed summary</h2><p id="stats-test-count">Collecting statistics...</p></div></div>
+        <div class="section-heading summary-heading stats-heading">
+          <div><h2>Connection statistics</h2><p id="stats-test-count">Collecting statistics...</p><p class="stats-coverage" id="stats-coverage"></p></div>
+          <div class="periods stats-periods" role="group" aria-label="Statistics period">
+            <button type="button" data-stats-period="24h">24H</button>
+            <button type="button" data-stats-period="7d">7D</button>
+            <button type="button" data-stats-period="30d" class="selected">30D</button>
+            <button type="button" data-stats-period="90d">90D</button>
+            <button type="button" data-stats-period="1y">1Y</button>
+            <button type="button" data-stats-period="all">ALL</button>
+          </div>
+        </div>
         <div class="speed-summary-grid">
           <article class="speed-summary-card"><span>Download</span><div class="summary-reading"><strong id="stats-download-avg">—</strong><small>Mbps</small></div><div class="summary-extremes"><span>Lowest <b id="stats-download-min">—</b></span><span>Highest <b id="stats-download-max">—</b></span></div></article>
           <article class="speed-summary-card"><span>Upload</span><div class="summary-reading"><strong id="stats-upload-avg">—</strong><small>Mbps</small></div><div class="summary-extremes"><span>Lowest <b id="stats-upload-min">—</b></span><span>Highest <b id="stats-upload-max">—</b></span></div></article>

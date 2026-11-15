@@ -143,5 +143,13 @@
   "Alert preferences saved": "Aviseringsinställningar sparade",
   "Test notification sent": "Testavisering skickad",
   "Could not send test notification: {reason}": "Kunde inte skicka testavisering: {reason}",
-  "Could not load statistics: {reason}": "Kunde inte läsa in statistik: {reason}"
+  "Could not load statistics: {reason}": "Kunde inte läsa in statistik: {reason}",
+  "Connection statistics": "Anslutningsstatistik",
+  "Statistics period": "Statistikperiod",
+  "· LAST 24 HOURS": "· SENASTE 24 TIMMARNA",
+  "· LAST 7 DAYS": "· SENASTE 7 DAGARNA",
+  "· LAST 90 DAYS": "· SENASTE 90 DAGARNA",
+  "· LAST YEAR": "· SENASTE ÅRET",
+  "Oldest test in this period: {date}": "Äldsta testet i perioden: {date}",
+  "No successful tests recorded in this period": "Inga lyckade test registrerade under perioden"
 }

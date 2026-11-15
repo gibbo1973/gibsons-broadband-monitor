@@ -4,7 +4,7 @@
 const $ = (id) => document.getElementById(id);
 const t = (message, args) => window.GBM_I18N.t(message, args);
 const locale = () => window.GBM_I18N.locale;
-const state = {period:'7d', history:[], status:null, view:'overview', charts:{}};
+const state = {period:'7d', statsPeriod:'30d', history:[], status:null, view:'overview', charts:{}};
 const palette = {download:'#35d4fa', upload:'#50edac', ping:'#c29cff'};
 const number = (n, digits=1) => n == null || !Number.isFinite(Number(n)) ? '—' : Number(n).toFixed(digits);
 const formatDate = (value, options={dateStyle:'medium',timeStyle:'short'}) => {
@@ -27,7 +27,7 @@ function setView(view){state.view=view;document.querySelectorAll('.view').forEac
 function showStatus(data){state.status=data;const latest=data.latest,probe=data.last_probe;
   $('down-value').textContent=number(latest?.download);$('up-value').textContent=number(latest?.upload);
   $('ping-value').textContent=number(latest?.ping,0);$('ping-note').textContent=latest?.jitter!=null?t('Jitter')+' '+number(latest.jitter)+' ms':t('Most recent test');
-  $('uptime').textContent=number(data.uptime30,2);$('outages-count').textContent=data.outages30;
+  // The selected statistics window controls uptime/outage figures; status only provides live readings.
   $('tests-count').textContent=data.speed_samples.toLocaleString(locale());$('last-test').textContent=ago(latest?.ts);
   $('probe-every').textContent=data.probe_interval+'s';$('last-check').textContent=ago(probe?.ts);
   const pill=$('connection-pill'), indicator=$('status-indicator');
@@ -160,18 +160,37 @@ function prettyDuration(seconds){if(seconds==null)return t('In progress');second
 async function loadOutages(){try{const data=await jsonFetch('/api/outages');const body=$('outages-table');body.replaceChildren();if(!data.outages.length){const tr=document.createElement('tr');tr.append(cell(t('No confirmed outages have been recorded.')));body.append(tr);return}for(const o of data.outages){const tr=document.createElement('tr');tr.append(cell(formatDate(o.started)),cell(formatDate(o.ended)),cell(prettyDuration(o.duration_seconds)),cell(o.ended?t('Restored'):t('Ongoing'),o.ended?'result-ok':'result-failed'));body.append(tr)}}catch(e){toast(e.message)}}
 async function runNow(){try{await jsonFetch('/api/run',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard'}});toast(t('Speed test started. The dashboard will update when it finishes.'));await loadStatus()}catch(e){toast(t('Could not start test: {reason}',{reason:e.message}))}}
 async function saveSettings(e){e.preventDefault();const payload={speed_interval:+$('speed-interval').value,probe_interval:+$('probe-interval').value,slow_threshold:+$('slow-threshold').value};try{await jsonFetch('/api/settings',{method:'POST',headers:{'X-Requested-With':'GibsonsDashboard','Content-Type':'application/json'},body:JSON.stringify(payload)});$('settings-message').textContent=t('Saved');await loadStatus();toast(t('Settings saved'))}catch(e){$('settings-message').textContent=e.message}}
+const statisticsPeriodLabels={
+  '24h':'· LAST 24 HOURS',
+  '7d':'· LAST 7 DAYS',
+  '30d':'· LAST 30 DAYS',
+  '90d':'· LAST 90 DAYS',
+  '1y':'· LAST YEAR',
+  'all':'· ALL TIME'
+};
 async function loadStatistics(){
+  const selected=state.statsPeriod;
   try{
-    const data=await jsonFetch('/api/statistics');
-    $('stats-test-count').textContent=t('{count} successful tests in the last 30 days', {
+    const data=await jsonFetch('/api/statistics?period='+encodeURIComponent(selected));
+    if(selected!==state.statsPeriod)return; // Ignore a slower response from the old period.
+    $('stats-test-count').textContent=t('{count} successful tests in selected period', {
       count:Number(data.samples||0).toLocaleString(locale())
     });
+    $('stats-coverage').textContent=data.first_sample
+      ?t('Oldest test in this period: {date}',{date:formatDate(data.first_sample,{dateStyle:'medium'})})
+      :t('No successful tests recorded in this period');
+    $('uptime').textContent=number(data.uptime,2);
+    $('outages-count').textContent=Number(data.outages||0).toLocaleString(locale());
+    for(const id of ['uptime-period-label','outages-period-label'])
+      $(id).textContent=t(statisticsPeriodLabels[selected]);
     for(const key of ['download','upload','ping','jitter']){
       for(const [field,suffix] of [['average','avg'],['minimum','min'],['maximum','max']]){
         $(`stats-${key}-${suffix}`).textContent=number(data[key]?.[field],1);
       }
     }
-  }catch(error){toast(t('Could not load statistics: {reason}',{reason:error.message}))}
+  }catch(error){
+    if(selected===state.statsPeriod)toast(t('Could not load statistics: {reason}',{reason:error.message}));
+  }
 }
 async function saveAlerts(event){
   event.preventDefault();
@@ -204,6 +223,13 @@ async function init(){
   makeCanvasChart('latency-chart',[{key:'ping',label:t('Ping'),unit:'ms',color:palette.ping}],'latency-empty','latency-tip');
   document.querySelectorAll('[data-view]').forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
   document.querySelectorAll('[data-period]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');state.period=b.dataset.period;$('date-range').classList.remove('open');loadHistory()}));
+  document.querySelectorAll('[data-stats-period]').forEach(b=>b.addEventListener('click',()=>{
+    document.querySelectorAll('[data-stats-period]').forEach(x=>x.classList.remove('selected'));
+    b.classList.add('selected');
+    state.statsPeriod=b.dataset.statsPeriod;
+    $('stats-test-count').textContent=t('Collecting statistics...');
+    loadStatistics();
+  }));
   $('custom-range-btn').addEventListener('click',()=>$('date-range').classList.toggle('open'));
   $('apply-range').addEventListener('click',()=>{state.period='custom';document.querySelectorAll('[data-period]').forEach(x=>x.classList.remove('selected'));loadHistory()});
   $('run-btn').addEventListener('click',runNow);$('settings-form').addEventListener('submit',saveSettings);

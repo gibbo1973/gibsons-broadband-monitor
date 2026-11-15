@@ -18,8 +18,8 @@
 - Hourly full speed tests by default, powered by [speedtest-go](https://github.com/showwin/speedtest-go) v1.8.3
 - Lightweight dual-endpoint HTTPS availability tests every 30 seconds
 - Outage start/end detection with two consecutive failures required to begin an event
-- 30-day uptime and outage totals (based on probe samples)
-- **30-day statistics:** actual average, minimum and maximum download, upload, ping and jitter across successful measurements
+- Selectable **24h, 7d, 30d, 90d, 1y and all-time uptime/outage totals**, based on recorded connectivity probes and outages that overlap each period
+- **Selectable historical statistics (24h to all time):** actual average, minimum and maximum download, upload, ping and jitter across successful measurements
 - Optional **ntfy phone alerts** for connection outages, restorations and slow download speeds; queued while offline and sent on reconnection
 - SQLite storage in `/data`, with no automatic deletion
 - Recent test and outage tables; export all speed-test results as CSV
@@ -82,7 +82,7 @@ Slow-speed alerts trigger once when a successful speed test falls below the thre
 
 ## Statistics
 
-The dashboard includes a **30-day speed summary** using only successful tests. It shows arithmetic averages and recorded minima/maxima for download, upload, ping and jitter; missing readings appear as dashes. These are actual measured values, not estimated speeds. The existing uptime percentage is based on HTTP availability probes and **must not be interpreted as ICMP packet loss**.
+The dashboard's **Connection statistics** section supports **24 hours, 7 days, 30 days, 90 days, 1 year (rolling 365 days), and all time**, with 30 days selected by default. It shows arithmetic averages and recorded minima/maxima for download, upload, ping and jitter using successful tests; missing readings appear as dashes. These are actual measurements, not estimated speeds. The statistics area also updates the **uptime percentage and number of outages** at the top of the overview for the selected period (outages include those overlapping the period, even if they began earlier). Uptime is the proportion of successful HTTP connectivity probes among recorded checks, **not an ICMP packet-loss measurement or time-weighted SLA guarantee**. When less than a year's history exists, the 1-year and all-time views use only the measurements actually collected and display the date of the oldest test in the period.
 
 ## Screenshots
 

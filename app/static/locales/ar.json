@@ -143,5 +143,13 @@
   "Alert preferences saved": "تم حفظ تفضيلات التنبيه",
   "Test notification sent": "تم إرسال الإشعار التجريبي",
   "Could not send test notification: {reason}": "تعذر إرسال الإشعار التجريبي: {reason}",
-  "Could not load statistics: {reason}": "تعذر تحميل الإحصاءات: {reason}"
+  "Could not load statistics: {reason}": "تعذر تحميل الإحصاءات: {reason}",
+  "Connection statistics": "إحصاءات الاتصال",
+  "Statistics period": "فترة الإحصاءات",
+  "· LAST 24 HOURS": "· آخر 24 ساعة",
+  "· LAST 7 DAYS": "· آخر 7 أيام",
+  "· LAST 90 DAYS": "· آخر 90 يومًا",
+  "· LAST YEAR": "· السنة الماضية",
+  "Oldest test in this period: {date}": "أقدم اختبار خلال هذه الفترة: {date}",
+  "No successful tests recorded in this period": "لم تُسجل اختبارات ناجحة خلال هذه الفترة"
 }

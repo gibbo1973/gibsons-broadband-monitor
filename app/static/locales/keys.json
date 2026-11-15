@@ -143,5 +143,13 @@
   "Alert preferences saved",
   "Test notification sent",
   "Could not send test notification: {reason}",
-  "Could not load statistics: {reason}"
+  "Could not load statistics: {reason}",
+  "Connection statistics",
+  "Statistics period",
+  "· LAST 24 HOURS",
+  "· LAST 7 DAYS",
+  "· LAST 90 DAYS",
+  "· LAST YEAR",
+  "Oldest test in this period: {date}",
+  "No successful tests recorded in this period"
 ]
