@@ -9,6 +9,11 @@
   <Project>https://github.com/gibbo1973/gibsons-broadband-monitor</Project>
   <Overview>Gibson's Broadband Monitor is a self-hosted internet speed and reliability monitor with a modern dashboard available in 16 languages. Features include automatic browser-language detection, scheduled speed testing, historical graphs, 24-hour to all-time statistics, host network data usage logging with daily charts and an optional monthly warning level, outage tracking and optional phone notifications. Existing Unraid installs using the old /proc/1/net/dev path should update it once in Docker Edit. Set the host path to /proc/1/net, the container path to /host/proc/net and access to Read Only. Keep the existing /data mapping to preserve history.</Overview>
   <Beta>true</Beta>
+  <Changes>## v0.4.1 Unraid startup fix
+
+If an existing container fails to start with a `/proc/1/net/dev` mount error, open **Docker → Gibson’s Broadband Monitor → Edit**. Edit **Host Network Counters**, set Host Path to `/proc/1/net`, Container Path to `/host/proc/net`, and Access Mode to **Read Only**. Keep your `/data` mapping to preserve history, then select **Apply**.
+
+New installs already use the corrected paths.</Changes>
   <License>MIT</License>
   <ReadMe>https://github.com/gibbo1973/gibsons-broadband-monitor/blob/main/README.md</ReadMe>
   <ExtraSearchTerms>speedtest broadband internet speed connection monitoring uptime outage latency graphs statistics multilingual multi-language translations notifications alerts server network usage data bandwidth traffic bytes rx tx</ExtraSearchTerms>
