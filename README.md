@@ -1,5 +1,8 @@
 # Gibson's Broadband Monitor
 
+> [!IMPORTANT]
+> **Upgrading an existing Unraid install to v0.4.1?** Unraid keeps your saved Docker paths when it updates the image. If your container has the old `/proc/1/net/dev` mapping, replace it in **Docker → Gibson’s Broadband Monitor → Edit** with host `/proc/1/net` → container `/host/proc/net` in **Read Only** mode. Keep your existing `/data` mapping to preserve your history. If you see a mount error and the container will not start, you can make this change from the Unraid Docker tab. See the [upgrade guide](RELEASE_GUIDE.md#existing-unraid-container-update-the-network-counters-mount).
+
 [![GHCR Docker pulls](https://ghcr-badge.elias.eu.org/shield/gibbo1973/gibsons-broadband-monitor)](https://github.com/users/gibbo1973/packages/container/package/gibsons-broadband-monitor)
 
 *Docker pulls are image downloads/updates, not a count of unique users. The badge is provided by a third-party GHCR statistics service and may lag or be temporarily unavailable.*
