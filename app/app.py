@@ -27,7 +27,7 @@ from flask import Flask, Response, jsonify, redirect, render_template, request, 
 
 from . import network as network_usage
 
-VERSION = "0.4.0-beta.2"
+VERSION = "0.4.1"
 DATA_DIR = Path(os.getenv("DATA_DIR", "/data"))
 DB_PATH = DATA_DIR / "monitor.sqlite3"
 PORT = int(os.getenv("PORT", "8765"))

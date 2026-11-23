@@ -109,7 +109,7 @@
         </div>
         <div id="network-setup" class="network-setup" hidden>
           <strong>Connect your server network interface</strong>
-          <p>To record host traffic, add a read-only Docker path: host <code>/proc/1/net/dev</code> to container <code>/host/proc/net/dev</code>, then apply the container settings. Your existing data remains intact.</p>
+          <p>To record host traffic, add a read-only Docker path: host <code>/proc/1/net</code> to container <code>/host/proc/net</code>, then apply the container settings. Your existing data remains intact.</p>
         </div>
         <div class="metric-grid network-metrics">
           <article class="metric-card metric-download"><div class="metric-label"><span class="metric-symbol">↓</span> DATA DOWNLOADED <span class="metric-corner">RECEIVED</span></div><div class="metric-reading"><span id="network-down">—</span><span class="unit" id="network-down-unit">GB</span></div><div class="metric-bottom"><span class="tiny-line cyan-line"></span><span>Selected period</span></div></article>

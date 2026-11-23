@@ -54,7 +54,7 @@ Use the Unraid **Docker > Add Container** interface (no local image build requir
 - **Network:** `bridge`; **Privileged:** off
 - **Port:** host `8765` -> container `8765/tcp`
 - **Persistent app data:** host `/mnt/user/appdata/gibsons-broadband-monitor` -> container `/data` (read/write)
-- **Host network counter file:** host `/proc/1/net/dev` -> container `/host/proc/net/dev` (**read-only**, required for host-wide traffic logging)
+- **Host network directory:** host `/proc/1/net` → container `/host/proc/net` (**read-only**, required for host-wide traffic logging)
 - **Environment:** `TZ=Europe/London` (change timezone as appropriate)
 - **WebUI:** `http://[IP]:[PORT:8765]/`
 
@@ -64,7 +64,7 @@ For any public or remote access, set `DASHBOARD_PASSWORD` and a long random `SEC
 
 Update the image through Unraid Docker's **Check for Updates**. The `/data` mapping preserves measurements across container updates. Do not delete the appdata directory unless you intend to delete recorded results.
 
-**Existing Unraid installations:** Updating a Docker image does **not** automatically add a new template path to an existing container. To activate **Server Network Usage**, select the container in **Unraid → Docker → Edit**, choose **Add another Path**, set the host path to `/proc/1/net/dev`, the container path to `/host/proc/net/dev` and the access mode to **Read Only**, then apply. Do **not** change the existing `/data` mapping or switch to host networking. The dashboard clearly explains this if the mount is missing.
+**Existing Unraid installations:** Version 0.4.1 uses a read-only directory mount for **Server Network Usage**. Updating the image alone leaves existing container paths in place. In **Unraid → Docker → Edit**, replace the old `/proc/1/net/dev` → `/host/proc/net/dev` mapping with host `/proc/1/net` → container `/host/proc/net` and set the access mode to **Read Only**. If there is no existing counters mapping, choose **Add another Path**. Keep the existing `/data` mapping and bridge networking, then select **Apply**.
 
 ## Alerts and notifications (optional)
 
@@ -93,10 +93,10 @@ The dashboard's **Connection statistics** section supports **24 hours, 7 days, 3
 The **Network usage** tab uses the same dark navy layout as the rest of the dashboard and shows real bytes received (**downloaded**) and transmitted (**uploaded**) by **one selected host network interface**. Choose **Auto** (prefers Unraid's `br0`, then `bond0`, then `eth0`) or select another interface. The interface selection and monthly warning level are stored locally in `/data/monitor.sqlite3`.
 
 - **Graph and totals:** 24 hours (hourly buckets), 7/30/90 days (daily buckets), one rolling year or all time (monthly buckets), plus CSV export of actual recorded buckets.
-- **Sampling:** readings every 60 seconds from `/proc/1/net/dev` mounted read-only. Counter differences are retained in SQLite. Reboots, counter resets and monitoring gaps longer than 210 seconds start a fresh baseline rather than inventing usage. The first sample establishes a baseline, so meaningful totals start after the next sample. Data is not backfilled.
+- **Sampling:** readings every 60 seconds from `/host/proc/net/dev` inside the read-only host directory mount. Counter differences are retained in SQLite. Reboots, counter resets and monitoring gaps longer than 210 seconds start a fresh baseline rather than inventing usage. The first sample establishes a baseline, so meaningful totals start after the next sample. Data is not backfilled.
 - **Monthly totals:** current UTC calendar month, plus average daily transfer after at least 24 hours of actively observed sample intervals (the dashboard shows a collecting state until then, rather than extrapolating a daily rate from the first few minutes). You can set an optional monthly warning level in GB (0 to disable); a progress bar highlights the threshold. This is an **in-dashboard warning**, not a phone notification.
 - **Scope:** server network traffic (including SMB/NFS LAN file copies, Docker traffic and internet transfers), **not whole-home internet usage or an ISP billing meter**. For accurate totals, use **one** host interface; summing a bridge and its underlying physical interface can double-count traffic.
-- **Security:** the host mount is a single read-only counters file; no Docker socket, privilege escalation, host networking, router credentials or external account is required. Without the mount, host-usage logging is visibly unavailable, rather than showing container traffic as host traffic.
+- **Security:** the read-only mount exposes the host procfs network directory to the container. The app reads only its `dev` counters file. It requires no Docker socket, privilege escalation, host networking, router credentials or external account. Without the mount, the dashboard marks host-usage logging as unavailable.
 
 ## Screenshots
 
@@ -118,7 +118,7 @@ Compose persists the database in the Docker named volume `gbm-data`. Do not dele
 | --- | --- | --- |
 | `PORT` | `8765` | App listening port (Docker image starts Waitress on 8765) |
 | `DATA_DIR` | `/data` | Persistent SQLite directory |
-| `HOST_NET_DEV` | `/host/proc/net/dev` | Read-only host counter file to bind from host `/proc/1/net/dev` |
+| `HOST_NET_DEV` | `/host/proc/net/dev` | Path inside the container to the host interface counters file |
 | `SPEED_INTERVAL_MINUTES` | `60` | Initial full speed-test interval (min 15, max 1440) |
 | `PROBE_INTERVAL_SECONDS` | `30` | Initial availability-test interval (min 15, max 3600) |
 | `SLOW_DOWNLOAD_MBPS` | `100` | Initial low-speed flag, editable in UI |

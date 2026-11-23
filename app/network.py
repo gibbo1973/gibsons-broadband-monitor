@@ -1,8 +1,8 @@
 """Host network-interface traffic accounting for Gibson's Broadband Monitor.
 
-Requires an explicit read-only bind of host /proc/1/net/dev into
-/host/proc/net/dev. Never silently substitute the container's network
-namespace: doing so would mislabel container traffic as server usage.
+Reads /host/proc/net/dev from a read-only bind of the host's /proc/1/net
+directory. Never silently substitute the container's network namespace:
+doing so would mislabel container traffic as server usage.
 """
 from __future__ import annotations
 
