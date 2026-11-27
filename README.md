@@ -54,6 +54,10 @@ English, French, German, Spanish, Italian, Dutch, Portuguese, Polish, Japanese, 
 
 Translations are maintained in `app/static/locales/`. Please report any wording or layout issues in GitHub Issues, particularly for languages that read right-to-left.
 
+## Other installation platforms
+
+Docker Hub publishing and CasaOS/ZimaOS and Runtipi packages are described in the [platform guide](PLATFORMS.md). Catalogue review and Docker Hub account setup are separate from the existing Unraid installation.
+
 ## Install on Unraid (prebuilt image)
 
 Use the Unraid **Docker > Add Container** interface (no local image build required), or import the prepared template in `unraid/gibsons-broadband-monitor.xml`.
