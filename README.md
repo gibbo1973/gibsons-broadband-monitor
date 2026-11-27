@@ -1,5 +1,10 @@
 # Gibson's Broadband Monitor
 
+[![Docker Hub pulls](https://img.shields.io/docker/pulls/gibbo73/gibsons-broadband-monitor?label=Docker%20Hub%20pulls&logo=docker)](https://hub.docker.com/r/gibbo73/gibsons-broadband-monitor)
+[![GitHub Container Registry pulls](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fghcr-badge.elias.eu.org%2Fapi%2Fgibbo1973%2Fgibsons-broadband-monitor&query=downloadCount&label=GitHub%20GHCR%20pulls&logo=github&color=blue)](https://github.com/users/gibbo1973/packages/container/package/gibsons-broadband-monitor)
+
+*Pull counts are tracked separately for Docker Hub and GitHub Container Registry (GHCR). They include image downloads and updates, not unique users or active installations. Counts may be cached; the GHCR badge uses a third-party statistics service and may lag or be temporarily unavailable.*
+
 > [!IMPORTANT]
 > **Unraid startup error mentioning `/proc/1/net/dev`?** Go to **Docker → Gibson’s Broadband Monitor → Edit**. Edit the **Host Network Counters** path and select **Apply**.
 >
@@ -8,10 +13,6 @@
 > - **Access Mode** Read Only
 >
 > Keep your `/data` mapping to preserve your history. You can also remove the old counters mapping to get speed tests and outage tracking running while you leave Server Network Usage disabled. See the [upgrade guide](RELEASE_GUIDE.md#existing-unraid-container-update-the-network-counters-mount).
-
-[![GHCR Docker pulls](https://ghcr-badge.elias.eu.org/shield/gibbo1973/gibsons-broadband-monitor)](https://github.com/users/gibbo1973/packages/container/package/gibsons-broadband-monitor)
-
-*Docker pulls are image downloads/updates, not a count of unique users. The badge is provided by a third-party GHCR statistics service and may lag or be temporarily unavailable.*
 
 ![Gibson's Broadband Monitor logo](app/static/brand.png)
 
