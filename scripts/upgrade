@@ -1,0 +1,9 @@
+#!/bin/bash
+source _common.sh
+source /usr/share/yunohost/helpers
+
+ynh_systemctl --service="$app" --action=stop
+setup_runtime
+configure_service
+ynh_systemctl --service="$app" --action=start
+ynh_systemctl --service=nginx --action=reload

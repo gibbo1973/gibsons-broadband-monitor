@@ -1,0 +1,16 @@
+#!/bin/bash
+source ../settings/scripts/_common.sh
+source /usr/share/yunohost/helpers
+
+ynh_restore "$install_dir"
+mkdir -p "$data_dir"
+# Restore the consistent snapshot instead of an unrelated retained data directory.
+rm -f "$data_dir/monitor.sqlite3-wal" "$data_dir/monitor.sqlite3-shm"
+cp "$install_dir/.backup/monitor.sqlite3" "$data_dir/monitor.sqlite3"
+chown -R "$app:$app" "$install_dir" "$data_dir"
+ynh_restore "/etc/nginx/conf.d/$domain.d/$app.conf"
+ynh_restore "/etc/systemd/system/$app.service"
+systemctl enable "$app.service" --quiet
+yunohost service add "$app" --description="Broadband connection monitor"
+ynh_systemctl --service="$app" --action=start
+ynh_systemctl --service=nginx --action=reload

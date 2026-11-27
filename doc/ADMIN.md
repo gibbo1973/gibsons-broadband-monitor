@@ -1,0 +1,1 @@
+Use a dedicated domain at its root URL. YunoHost SSO protects the dashboard by default. Speed tests consume data. Host counters include LAN traffic. The database is backed up with SQLite online backup and restored from that snapshot. Platform lifecycle validation is pending.

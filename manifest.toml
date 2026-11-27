@@ -1,0 +1,52 @@
+packaging_format = 2
+id = "gibsons_broadband_monitor"
+name = "Gibson's Broadband Monitor"
+description.en = "Broadband speed, latency, availability and server network traffic monitoring"
+version = "0.4.1~ynh1"
+maintainers = ["gibbo1973"]
+
+[upstream]
+license = "MIT"
+website = "https://github.com/gibbo1973/gibsons-broadband-monitor"
+code = "https://github.com/gibbo1973/gibsons-broadband-monitor"
+admindoc = "https://github.com/gibbo1973/gibsons-broadband-monitor/blob/main/README.md"
+
+[integration]
+yunohost = ">= 12.1.17"
+helpers_version = "2.1"
+architectures = ["amd64", "arm64"]
+multi_instance = true
+ldap = false
+sso = true
+disk = "150M"
+ram.build = "256M"
+ram.runtime = "256M"
+
+[install.domain]
+type = "domain"
+help.en = "Use a dedicated domain or subdomain. The dashboard requires the root URL."
+
+[install.init_main_permission]
+type = "group"
+default = "all_users"
+
+[resources.sources.main]
+url = "https://github.com/gibbo1973/gibsons-broadband-monitor/archive/refs/tags/v0.4.1.tar.gz"
+sha256 = "9391a2de5942afaf22fe090da6d654806679ee680a09894fa39bd3d8f6aa3b11"
+
+[resources.sources.speedtest]
+in_subdir = false
+amd64.url = "https://github.com/showwin/speedtest-go/releases/download/v1.8.3/speedtest-go_1.8.3_Linux_x86_64.tar.gz"
+amd64.sha256 = "c55caae22927cd719a2f8c0bef96ecf74b5fe8ca919ff9200d76328ae5de9477"
+arm64.url = "https://github.com/showwin/speedtest-go/releases/download/v1.8.3/speedtest-go_1.8.3_Linux_arm64.tar.gz"
+arm64.sha256 = "48f51504548d76d5dc2ce7f72e713bd3b4e35554028b7131467060688754c657"
+
+[resources.system_user]
+[resources.install_dir]
+[resources.data_dir]
+[resources.permissions]
+main.url = "/"
+[resources.ports]
+main.default = 8765
+[resources.apt]
+packages = "python3, python3-venv, ca-certificates"

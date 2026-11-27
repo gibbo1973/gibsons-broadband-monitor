@@ -1,0 +1,16 @@
+#!/bin/bash
+source ../settings/scripts/_common.sh
+source /usr/share/yunohost/helpers
+
+# An online SQLite backup produces one consistent file without copying live WAL files.
+mkdir -p "$install_dir/.backup"
+python3 - "$data_dir/monitor.sqlite3" "$install_dir/.backup/monitor.sqlite3" <<'PY'
+import sqlite3, sys
+with sqlite3.connect('file:'+sys.argv[1]+'?mode=ro', uri=True) as source:
+    with sqlite3.connect(sys.argv[2]) as target:
+        source.backup(target)
+PY
+chmod 600 "$install_dir/.backup/monitor.sqlite3"
+ynh_backup "$install_dir"
+ynh_backup "/etc/nginx/conf.d/$domain.d/$app.conf"
+ynh_backup "/etc/systemd/system/$app.service"

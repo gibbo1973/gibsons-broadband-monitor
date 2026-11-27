@@ -1,0 +1,11 @@
+#!/bin/bash
+source _common.sh
+source /usr/share/yunohost/helpers
+
+ynh_script_progression "Installing source and Python environment..."
+session_secret=$(ynh_string_random --length=64)
+ynh_app_setting_set --key=session_secret --value="$session_secret"
+setup_runtime
+configure_service
+ynh_systemctl --service="$app" --action=start
+ynh_systemctl --service=nginx --action=reload
