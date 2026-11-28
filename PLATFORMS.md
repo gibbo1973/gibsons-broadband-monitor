@@ -47,7 +47,7 @@ The distribution workflow checks metadata and Compose configuration, starts each
 ## TrueNAS SCALE
 
 Source package: `platforms/truenas/ix-dev/community/gibsons-broadband-monitor`.
-Official submission: [truenas/apps #6723](https://github.com/truenas/apps/pull/6723), currently a draft.
+Official submission: [truenas/apps #6723](https://github.com/truenas/apps/pull/6723), currently a draft. App-request discussion: [#6725](https://github.com/truenas/apps/issues/6725), opened after the draft. Upstream workflows await maintainer approval.
 Requires TrueNAS SCALE 24.10.2.2 or newer. During installation select dedicated persistent storage, a dashboard password and a stable session secret. Host traffic counters are optional and disabled by default.
 
 Official metadata and question schemas, library hash and two template/portal scenarios pass. Actual TrueNAS deployment, restart and persistence remain unverified. The expected icon CDN URL awaits maintainer upload from the source artwork linked in the PR.
@@ -55,7 +55,7 @@ Official metadata and question schemas, library hash and two template/portal sce
 ## Umbrel
 
 Source package: `platforms/umbrel/gibsons-broadband-monitor`.
-Official submission: [getumbrel/umbrel-apps #6438](https://github.com/getumbrel/umbrel-apps/pull/6438), currently a draft.
+Official submission: [getumbrel/umbrel-apps #6438](https://github.com/getumbrel/umbrel-apps/pull/6438), currently a draft. Synced with the current catalogue on 28 November 2026; GitHub reports no merge conflicts and the official PR lint passed.
 Uses port 8766, Umbrel authentication, a per-install app password and session secret, and dedicated persistent SQLite storage. The image is pinned to the public v0.4.1 multi-architecture index.
 
 Official lint with image checks passes with zero errors and three intentional warnings for the read-only host-counter mount, required startup capabilities and no-new-privileges setting; reasons are recorded in the PR. Installation, HTTPS, browser launch, restart and persistence through Umbrel's lifecycle remain unverified.
@@ -71,4 +71,4 @@ Official manifest/test schemas, shell syntax, all three source checksums, catalo
 
 ## Synology and QNAP
 
-The existing Linux amd64/arm64 image can be used with supported Container Manager or Container Station models, but container availability is separate from a native official Package Center/App Center listing. Synology's developer application was submitted through its official form on 28 November 2026, and the [confirmation page](https://synoform.synology.com/en-global/form/ticket_created) stated that the inquiry was received and an email reply would follow. Developer review, native DSM packaging, signing and target-device verification remain pending. QNAP's developer partner application was submitted on 27 November 2026 and its portal confirmed receipt pending review and approval. Native QPKG packaging, target-device verification and App Center submission remain pending developer approval. No native SPK/QPKG validation or official listing is claimed.
+The existing Linux amd64/arm64 image can be used with supported Container Manager or Container Station models, but container availability is separate from a native official Package Center/App Center listing. Synology's developer application was submitted through its official form on 28 November 2026, and the [confirmation page](https://synoform.synology.com/en-global/form/ticket_created) stated that the inquiry was received and an email reply would follow. Developer review, native DSM packaging, signing and target-device verification remain pending. QNAP's developer partner application was submitted on 27 November 2026 and its portal confirmed receipt pending review and approval. QNAP's status email confirms the application is Reviewing. Native QPKG packaging, target-device verification and App Center submission remain pending developer approval. No native SPK/QPKG validation or official listing is claimed.
