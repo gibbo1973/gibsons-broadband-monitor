@@ -62,9 +62,12 @@ Official lint with image checks passes with zero errors and three intentional wa
 
 ## YunoHost
 
-A native package using the official example_ynh structure is prepared on the [`packaging/yunohost` branch](https://github.com/gibbo1973/gibsons-broadband-monitor/tree/packaging/yunohost). It uses a dedicated system user, Python virtual environment, systemd, nginx and YunoHost SSO, rather than Docker.
+Dedicated native package: [`gibsons_broadband_monitor_ynh`](https://github.com/gibbo1973/gibsons_broadband_monitor_ynh).
+Official catalogue submission: [YunoHost/apps #3741](https://github.com/YunoHost/apps/pull/3741), submitted on 28 November 2026 as `inprogress`, pinned to package commit `6c5da14852414dd9ff72af351b3b6fd0a7eecea6`.
 
-Manifest and test-definition schemas, shell syntax, the app source checksum and both upstream speedtest-go Linux binary checksums pass. Full YunoHost lifecycle testing is pending. The official catalogue requires a dedicated repository named `gibsons_broadband_monitor_ynh` before a catalogue entry can be submitted. This branch is prepared source, not a submitted or approved catalogue app.
+Uses the official example_ynh structure and helpers 2.1, a dedicated user, Python virtual environment, systemd/Waitress on loopback, nginx, YunoHost SSO and consistent SQLite snapshots for backups. Requires YunoHost 12.1.17 or newer, a dedicated domain and amd64 or arm64. The display name is shortened to Gibson's Broadband to meet YunoHost's 22-character limit.
+
+Official manifest/test schemas, shell syntax, all three source checksums, catalogue consistency and logo checks passed. The official package linter passes manifest, scripts, helper usage and configuration checks; its remaining errors concern the package not yet being in the official catalogue or marked working. Full installation/SSO, scheduled tests, restart, upgrade, backup/restore and domain-change validation remain pending on a YunoHost system. Submission does not imply catalogue approval or a working quality level. AI assistance is disclosed in the package and submission.
 
 ## Synology and QNAP
 
